@@ -22,7 +22,7 @@ class User(AbstractUser):
         profile = getattr(self, "profile", None)
         if not profile:
             return ""
-        if getattr(profile, "profile_photo_file", None):
+        if getattr(settings, "USE_LOCAL_MEDIA", False) and getattr(profile, "profile_photo_file", None):
             try:
                 return profile.profile_photo_file.url
             except Exception:
@@ -34,7 +34,7 @@ class User(AbstractUser):
         profile = getattr(self, "profile", None)
         if not profile:
             return ""
-        if getattr(profile, "cover_photo_file", None):
+        if getattr(settings, "USE_LOCAL_MEDIA", False) and getattr(profile, "cover_photo_file", None):
             try:
                 return profile.cover_photo_file.url
             except Exception:

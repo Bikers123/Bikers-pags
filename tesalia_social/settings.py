@@ -76,6 +76,7 @@ def _parse_database_url(database_url: str) -> dict:
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-secret-key-change-me")
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
+USE_LOCAL_MEDIA = os.getenv("USE_LOCAL_MEDIA", "1" if DEBUG else "0") == "1"
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
 _vercel_url = (os.getenv("VERCEL_URL") or "").strip()
 if _vercel_url and _vercel_url not in ALLOWED_HOSTS:

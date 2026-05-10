@@ -29,13 +29,9 @@
 {% block content %}
   <section class="profile">
     <div class="profile__hero" data-animate="hero">
-      {% if profile.cover_photo_file %}
-        <div class="profile__cover" style="background-image:url('{{ profile.cover_photo_file.url }}')"></div>
-      {% else %}
-        {% with cover=profile.cover_photo_url %}
-          <div class="profile__cover"{% if cover %} style="background-image:url('{{ cover }}')"{% endif %}></div>
-        {% endwith %}
-      {% endif %}
+      {% with cover=rider.cover_url %}
+        <div class="profile__cover"{% if cover %} style="background-image:url('{{ cover }}')"{% endif %}></div>
+      {% endwith %}
       <div class="profile__card" data-user-card data-user-id="{{ rider.id }}">
         {% with photo=rider.photo_url %}
           <span class="avatar avatar--xl profile__avatar"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
