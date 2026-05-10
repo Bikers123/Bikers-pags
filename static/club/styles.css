@@ -264,7 +264,8 @@ img{max-width:100%;display:block}
 .suggestion__name{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .suggestion__sub{color:var(--muted);font-size:12px;font-weight:800}
 
-.avatar{width:40px;height:40px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);background-size:cover;background-position:center}
+.avatar{position:relative;width:40px;height:40px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);background-size:cover;background-position:center}
+.avatar--online::after{content:"";position:absolute;bottom:-1px;right:-1px;width:13px;height:13px;background:var(--ok);border:2px solid var(--panel);border-radius:50%}
 .avatar--sm{width:30px;height:30px}
 .avatar--lg{width:72px;height:72px;border-radius:22px}
 .avatar--xl{width:88px;height:88px;border-radius:26px}

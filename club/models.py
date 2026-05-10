@@ -18,6 +18,11 @@ class User(AbstractUser):
     )
 
     @property
+    def is_online(self) -> bool:
+        from django.core.cache import cache
+        return bool(cache.get(f'seen_{self.username}'))
+
+    @property
     def photo_url(self) -> str:
         profile = getattr(self, "profile", None)
         if not profile:

@@ -103,6 +103,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "club.middleware.ActiveUserMiddleware",
 ]
 
 ROOT_URLCONF = "tesalia_social.urls"

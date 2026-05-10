@@ -17,7 +17,7 @@
     <div class="topbar__right">
       <a class="topbar__user" href="{% url 'rider_detail' request.user.username %}">
         {% with photo=request.user.photo_url %}
-          <span class="avatar avatar--sm"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+          <span class="avatar avatar--sm{% if request.user.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
         {% endwith %}
         <span class="topbar__name">{{ request.user.get_full_name|default:request.user.username }}</span>
       </a>
@@ -49,7 +49,7 @@
             {% endwith %}
             <a class="usercard__top" href="{% url 'rider_detail' u.username %}">
               {% with photo=u.photo_url %}
-                <span class="avatar avatar--lg"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+                <span class="avatar avatar--lg{% if u.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
               {% endwith %}
               <div class="usercard__name">{{ u.get_full_name|default:u.username }}</div>
               <div class="usercard__handle">@{{ u.username }}</div>

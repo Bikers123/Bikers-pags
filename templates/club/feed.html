@@ -21,7 +21,7 @@
     <div class="topbar__right">
       <div class="topbar__user">
         {% with photo=request.user.photo_url %}
-          <span class="avatar"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+          <span class="avatar{% if request.user.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
         {% endwith %}
         <span class="topbar__name">{{ request.user.get_full_name|default:request.user.username }}</span>
       </div>
@@ -47,7 +47,7 @@
             {% for u in friends %}
               <a class="friend" href="{% url 'rider_detail' u.username %}">
                 {% with photo=u.photo_url %}
-                  <span class="avatar avatar--sm"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+                  <span class="avatar avatar--sm{% if u.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
                 {% endwith %}
                 <span class="friend__name">{{ u.get_full_name|default:u.username }}</span>
               </a>
@@ -64,7 +64,7 @@
         {% csrf_token %}
         <div class="composer__left">
           {% with photo=request.user.photo_url %}
-            <span class="avatar"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+            <span class="avatar{% if request.user.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
           {% endwith %}
         </div>
         <div class="composer__right">
@@ -111,7 +111,7 @@
           <article class="post" data-animate="card" id="post-{{ post.id }}">
             <header class="post__head">
               {% with photo=post.author.photo_url %}
-                <span class="avatar"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+                <span class="avatar{% if post.author.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
               {% endwith %}
               <div class="post__meta">
                 <div class="post__author">{{ post.author.get_full_name|default:post.author.username }}</div>
@@ -139,7 +139,7 @@
                   {% for c in post.comments.all %}
                     <div class="comment">
                       {% with photo=c.author.photo_url %}
-                        <span class="avatar avatar--sm"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+                        <span class="avatar avatar--sm{% if c.author.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
                       {% endwith %}
                       <div class="comment__body">
                         <div class="comment__author">{{ c.author.get_full_name|default:c.author.username }}</div>
@@ -223,7 +223,7 @@
               <div class="suggestion" data-user-card data-user-id="{{ fr.requester.id }}">
                 <a class="suggestion__left" href="{% url 'rider_detail' fr.requester.username %}">
                   {% with photo=fr.requester.photo_url %}
-                    <span class="avatar avatar--sm"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+                    <span class="avatar avatar--sm{% if fr.requester.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
                   {% endwith %}
                   <div class="suggestion__meta">
                     <div class="suggestion__name">{{ fr.requester.get_full_name|default:fr.requester.username }}</div>
@@ -246,7 +246,7 @@
             <div class="suggestion" data-user-card data-user-id="{{ u.id }}">
               <a class="suggestion__left" href="{% url 'rider_detail' u.username %}">
                 {% with photo=u.photo_url %}
-                  <span class="avatar avatar--sm"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+                  <span class="avatar avatar--sm{% if u.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
                 {% endwith %}
                 <div class="suggestion__meta">
                   <div class="suggestion__name">{{ u.get_full_name|default:u.username }}</div>
