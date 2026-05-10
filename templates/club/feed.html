@@ -185,6 +185,30 @@
       </div>
 
       <div class="panel">
+        <div class="panel__title">Solicitudes</div>
+        {% if incoming_requests %}
+          <div class="suggestions">
+            {% for fr in incoming_requests %}
+              <div class="suggestion" data-user-card data-user-id="{{ fr.requester.id }}">
+                <a class="suggestion__left" href="{% url 'rider_detail' fr.requester.username %}">
+                  {% with photo=fr.requester.photo_url %}
+                    <span class="avatar avatar--sm"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+                  {% endwith %}
+                  <div class="suggestion__meta">
+                    <div class="suggestion__name">{{ fr.requester.get_full_name|default:fr.requester.username }}</div>
+                    <div class="suggestion__sub">@{{ fr.requester.username }}</div>
+                  </div>
+                </a>
+                <button class="btn btn--primary btn--sm" type="button" data-accept-friend data-request-id="{{ fr.id }}">Aceptar</button>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="muted">No tienes solicitudes pendientes.</div>
+        {% endif %}
+      </div>
+
+      <div class="panel">
         <div class="panel__title">Sugerencias</div>
         <div class="suggestions">
           {% for u in friend_suggestions %}
@@ -198,7 +222,15 @@
                   <div class="suggestion__sub">@{{ u.username }}</div>
                 </div>
               </a>
-              <button class="btn btn--primary btn--sm" type="button" data-add-friend>Agregar</button>
+              {% if u.friend_status == 'accepted' %}
+                <button class="btn btn--ghost btn--sm" type="button" disabled>Amigos</button>
+              {% elif u.friend_status == 'pending' and u.friend_dir == 'out' %}
+                <button class="btn btn--ghost btn--sm" type="button" disabled>Pendiente</button>
+              {% elif u.friend_status == 'pending' and u.friend_dir == 'in' %}
+                <button class="btn btn--primary btn--sm" type="button" data-accept-friend data-request-id="{{ u.friend_request_id }}">Aceptar</button>
+              {% else %}
+                <button class="btn btn--primary btn--sm" type="button" data-add-friend>Agregar</button>
+              {% endif %}
             </div>
           {% empty %}
             <div class="muted">No hay sugerencias.</div>

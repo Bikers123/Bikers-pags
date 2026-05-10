@@ -17,6 +17,29 @@ function postForm(url, data) {
   }).then((r) => r.json());
 }
 
+function ensureToastStack() {
+  let stack = qs(".toast-stack");
+  if (!stack) {
+    stack = document.createElement("div");
+    stack.className = "toast-stack";
+    stack.setAttribute("aria-live", "polite");
+    stack.setAttribute("aria-atomic", "true");
+    document.body.appendChild(stack);
+  }
+  return stack;
+}
+
+function showToast(message, kind = "success") {
+  const stack = ensureToastStack();
+  const toast = document.createElement("div");
+  toast.className = `toast toast--${kind}`;
+  toast.textContent = message;
+  stack.appendChild(toast);
+  setTimeout(() => {
+    toast.remove();
+  }, 4200);
+}
+
 function qs(sel, root = document) {
   return root.querySelector(sel);
 }
@@ -105,28 +128,87 @@ function initSearch() {
 function initFriendButtons() {
   qsa("[data-user-card]").forEach((card) => {
     const btn = qs("[data-add-friend]", card);
-    if (!btn) return;
-    btn.addEventListener("click", async () => {
-      const userId = card.getAttribute("data-user-id");
-      if (!userId) return;
-      btn.disabled = true;
-      btn.textContent = "Enviando...";
-      try {
-        const res = await postForm("/api/friends/request/", { user_id: userId });
-        if (res && res.ok) {
-          btn.textContent = res.status === "accepted" ? "Amigos" : "Solicitud enviada";
-        } else {
+    if (btn) {
+      btn.addEventListener("click", async () => {
+        const userId = card.getAttribute("data-user-id");
+        if (!userId) return;
+        btn.disabled = true;
+        btn.textContent = "Enviando...";
+        try {
+          const res = await postForm("/api/friends/request/", { user_id: userId });
+          if (res && res.ok) {
+            if (res.status === "accepted") {
+              btn.textContent = "Amigos";
+              btn.disabled = true;
+            } else {
+              btn.textContent = "Pendiente";
+              btn.disabled = true;
+            }
+          } else {
+            btn.textContent = "Error";
+            btn.disabled = false;
+          }
+        } catch {
           btn.textContent = "Error";
-        }
-      } catch {
-        btn.textContent = "Error";
-      } finally {
-        setTimeout(() => {
           btn.disabled = false;
-        }, 600);
-      }
-    });
+        }
+      });
+    }
+
+    const acceptBtn = qs("[data-accept-friend]", card);
+    if (acceptBtn) {
+      acceptBtn.addEventListener("click", async () => {
+        const requestId = acceptBtn.getAttribute("data-request-id");
+        if (!requestId) return;
+        acceptBtn.disabled = true;
+        acceptBtn.textContent = "Aceptando...";
+        try {
+          const res = await postForm("/api/friends/accept/", { request_id: requestId });
+          if (res && res.ok) {
+            acceptBtn.textContent = "Amigos";
+            acceptBtn.disabled = true;
+            showToast("Solicitud aceptada", "success");
+          } else {
+            acceptBtn.textContent = "Error";
+            acceptBtn.disabled = false;
+          }
+        } catch {
+          acceptBtn.textContent = "Error";
+          acceptBtn.disabled = false;
+        }
+      });
+    }
   });
+}
+
+function initFriendUpdates() {
+  if (!qs(".topbar")) return;
+  const key = "tm_friend_updates_since";
+  let since = parseInt(localStorage.getItem(key) || "0", 10);
+  if (!since) {
+    since = Date.now();
+    localStorage.setItem(key, String(since));
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch(`/api/friends/updates/?since=${encodeURIComponent(String(since))}`);
+      const data = await r.json();
+      if (!data || !data.ok) return;
+      const events = Array.isArray(data.events) ? data.events : [];
+      events.forEach((e) => {
+        const name = (e && e.name) || "Un rider";
+        showToast(`${name} aceptó tu solicitud`, "success");
+      });
+      const now = typeof data.now === "number" ? data.now : Date.now();
+      const maxEvent = events.reduce((acc, e) => Math.max(acc, (e && e.ts) || 0), 0);
+      since = Math.max(since, now, maxEvent);
+      localStorage.setItem(key, String(since));
+    } catch {}
+  }
+
+  poll();
+  setInterval(poll, 12000);
 }
 
 function initCarousel() {
@@ -294,6 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initAccordion();
   initSearch();
   initFriendButtons();
+  initFriendUpdates();
   initCarousel();
   initStoriesScroll();
   initProfilePhotoUpload();

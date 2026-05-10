@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 from django.conf import settings
 from django.contrib import messages
@@ -9,11 +9,11 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 from django import forms
 
 from .forms import LoginForm, ProfileEditForm, RegisterForm
-from .models import Friendship, Post, RiderProfile, Trip, User
 
 
 def home(request: HttpRequest):
@@ -73,6 +73,32 @@ def _friends_queryset(user: User):
         status=Friendship.Status.ACCEPTED,
     ).filter(Q(requester=user) | Q(addressee=user))
 
+ 
+def _attach_friendship_meta(me: User, users: list[User]) -> None:
+    ids = [u.id for u in users if u.id and u.id != me.id]
+    if not ids:
+        return
+    rels = (
+        Friendship.objects.filter(
+            Q(requester=me, addressee_id__in=ids) | Q(addressee=me, requester_id__in=ids)
+        )
+        .select_related("requester", "addressee")
+        .order_by("-created_at")
+    )
+    by_other: dict[int, Friendship] = {}
+    for fr in rels:
+        other_id = fr.addressee_id if fr.requester_id == me.id else fr.requester_id
+        if other_id and other_id not in by_other:
+            by_other[other_id] = fr
+    for u in users:
+        fr = by_other.get(u.id)
+        u.friend_status = fr.status if fr else ""
+        u.friend_request_id = fr.id if fr else 0
+        if fr:
+            u.friend_dir = "out" if fr.requester_id == me.id else "in"
+        else:
+            u.friend_dir = ""
+
 
 @login_required
 def feed(request: HttpRequest):
@@ -88,11 +114,18 @@ def feed(request: HttpRequest):
     for fr in accepted_friendships:
         friends.append(fr.addressee if fr.requester_id == request.user.id else fr.requester)
 
-    friend_suggestions = (
+    friend_suggestions = list(
         User.objects.exclude(id=request.user.id)
         .exclude(id__in=[u.id for u in friends])
         .select_related("profile")
         .order_by("date_joined")[:8]
+    )
+    _attach_friendship_meta(request.user, friend_suggestions)
+
+    incoming_requests = (
+        Friendship.objects.filter(addressee=request.user, status=Friendship.Status.PENDING)
+        .select_related("requester", "requester__profile")
+        .order_by("-created_at")[:10]
     )
 
     fallback_posts = []
@@ -130,6 +163,7 @@ def feed(request: HttpRequest):
             "trips": trips,
             "friends": friends,
             "friend_suggestions": friend_suggestions,
+            "incoming_requests": incoming_requests,
             "fallback_posts": fallback_posts,
             "fallback_trips": fallback_trips,
         },
@@ -142,7 +176,9 @@ def riders(request: HttpRequest):
     qs = User.objects.select_related("profile").order_by("username")
     if q:
         qs = qs.filter(Q(username__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q))
-    return render(request, "club/riders.html", {"riders": qs[:200], "q": q})
+    riders_list = list(qs[:200])
+    _attach_friendship_meta(request.user, riders_list)
+    return render(request, "club/riders.html", {"riders": riders_list, "q": q})
 
 
 @login_required
@@ -150,6 +186,8 @@ def rider_detail(request: HttpRequest, username: str):
     rider = get_object_or_404(User, username=username)
     profile, _ = RiderProfile.objects.get_or_create(user=rider)
     can_view_private = settings.ALLOW_PUBLIC_PROFILE_VIEW or request.user.is_staff or request.user.is_superuser
+    if rider.id != request.user.id:
+        _attach_friendship_meta(request.user, [rider])
     return render(
         request,
         "club/rider_detail.html",
@@ -237,5 +275,47 @@ def api_friend_accept(request: HttpRequest):
         request_id = 0
     fr = get_object_or_404(Friendship, id=request_id, addressee=request.user)
     fr.status = Friendship.Status.ACCEPTED
-    fr.save(update_fields=["status"])
-    return JsonResponse({"ok": True, "status": fr.status})
+    fr.save(update_fields=["status", "updated_at"])
+    return JsonResponse(
+        {
+            "ok": True,
+            "status": fr.status,
+            "requester_id": fr.requester_id,
+            "addressee_id": fr.addressee_id,
+        }
+    )
+
+
+@login_required
+@require_GET
+def api_friend_updates(request: HttpRequest):
+    raw_since = (request.GET.get("since") or "").strip()
+    since_dt = None
+    if raw_since.isdigit():
+        since_ms = int(raw_since)
+        since_dt = datetime.fromtimestamp(since_ms / 1000.0, tz=timezone.utc)
+    if since_dt is None:
+        since_dt = datetime.fromtimestamp(0, tz=timezone.utc)
+
+    updates = (
+        Friendship.objects.filter(
+            requester=request.user,
+            status=Friendship.Status.ACCEPTED,
+            updated_at__gt=since_dt,
+        )
+        .select_related("addressee", "addressee__profile")
+        .order_by("updated_at")[:20]
+    )
+    events = []
+    for fr in updates:
+        u = fr.addressee
+        events.append(
+            {
+                "id": fr.id,
+                "user_id": u.id,
+                "username": u.username,
+                "name": u.get_full_name() or u.username,
+                "ts": int(fr.updated_at.timestamp() * 1000),
+            }
+        )
+    return JsonResponse({"ok": True, "events": events, "now": int(timezone.now().timestamp() * 1000)})
