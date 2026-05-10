@@ -3,8 +3,25 @@
 {% block title %}Login | Tesalia Motoclub{% endblock %}
 
 {% block content %}
-  <section class="auth auth--center">
-    <div class="authcard" data-animate="auth">
+  <section class="auth auth--center auth--page">
+    <header class="authnav">
+      <div class="authnav__inner">
+        <a class="brand brand--compact" href="{% url 'login' %}">
+          <div class="brand__mark">TM</div>
+          <div class="brand__text">
+            <div class="brand__title">Tesalia</div>
+            <div class="brand__tagline">Motoclub</div>
+          </div>
+        </a>
+        <nav class="authnav__tabs" aria-label="Acceso">
+          <a class="authnav__tab is-active" href="{% url 'login' %}">Iniciar sesión</a>
+          <a class="authnav__tab" href="{% url 'register' %}">Crear cuenta</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="authpage">
+      <div class="authcard" data-animate="auth">
       <div class="authcard__brand">
         <div class="brand brand--compact">
           <div class="brand__mark">TM</div>
@@ -48,6 +65,68 @@
 
         <a class="btn btn--ghost btn--wide" href="{% url 'register' %}"><span class="mi material-symbols-rounded" aria-hidden="true">person_add</span>Crear cuenta</a>
       </form>
+      </div>
+
+      <section class="authpreview" aria-label="Vista previa del club">
+        <div class="authpreview__head">
+          <div class="authpreview__title">Vista previa del club</div>
+          <div class="authpreview__sub">Demo: aquí verás viajes y publicaciones cuando entres.</div>
+        </div>
+        <div class="authpreview__grid">
+          <div class="panel">
+            <div class="panel__title">Próximos viajes (demo)</div>
+            <div class="authpreview__list">
+              <div class="authpreview__item">
+                <div class="authpreview__thumb" style="background-image:url('https://images.unsplash.com/photo-1526726538690-5cbf956ae2fd?auto=format&fit=crop&w=900&q=80')"></div>
+                <div class="authpreview__meta">
+                  <div class="authpreview__name">Rodada de bienvenida</div>
+                  <div class="authpreview__subtle">Salida: Domingo 7:30am · Punto: Gasolinera Tesalia</div>
+                </div>
+              </div>
+              <div class="authpreview__item">
+                <div class="authpreview__thumb" style="background-image:url('https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=900&q=80')"></div>
+                <div class="authpreview__meta">
+                  <div class="authpreview__name">Ruta panorámica</div>
+                  <div class="authpreview__subtle">Nivel: Medio · Regreso: tarde</div>
+                </div>
+              </div>
+              <div class="authpreview__item">
+                <div class="authpreview__thumb" style="background-image:url('https://images.unsplash.com/photo-1525609004556-c46c7d6cf023?auto=format&fit=crop&w=900&q=80')"></div>
+                <div class="authpreview__meta">
+                  <div class="authpreview__name">Rodada nocturna</div>
+                  <div class="authpreview__subtle">Requisitos: casco, luces y chaleco</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel__title">Publicaciones (demo)</div>
+            <div class="authpreview__posts">
+              <article class="post">
+                <header class="post__head">
+                  <span class="avatar" style="background-image:url('https://images.unsplash.com/photo-1558981403-c5ak3d0f2394?auto=format&fit=crop&w=160&h=160&q=80')"></span>
+                  <div class="post__meta">
+                    <div class="post__author">Tesalia Motoclub</div>
+                    <div class="post__time">Hoy</div>
+                  </div>
+                </header>
+                <div class="post__text">Recomendación: revisa presión de llantas y lleva agua. Nos vemos en la salida.</div>
+              </article>
+              <article class="post">
+                <header class="post__head">
+                  <span class="avatar" style="background-image:url('https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=160&h=160&q=80')"></span>
+                  <div class="post__meta">
+                    <div class="post__author">Admin</div>
+                    <div class="post__time">Ayer</div>
+                  </div>
+                </header>
+                <div class="post__text">Nueva ruta sugerida: mirador + parada de fotos. Entra para ver detalles.</div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </section>
 {% endblock %}
