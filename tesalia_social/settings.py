@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import socket
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -49,7 +50,7 @@ def _parse_database_url(database_url: str) -> dict:
     parsed = urlparse(database_url)
     if parsed.scheme not in {"postgres", "postgresql"}:
         raise ValueError("Solo se soporta DATABASE_URL tipo postgres/postgresql")
-    return {
+    config = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": (parsed.path or "").lstrip("/"),
         "USER": parsed.username or "",
@@ -59,6 +60,18 @@ def _parse_database_url(database_url: str) -> dict:
         "CONN_MAX_AGE": 60,
         "OPTIONS": {"sslmode": os.getenv("PGSSLMODE", "require")},
     }
+    prefer_ipv4 = os.getenv("PG_PREFER_IPV4", "0") == "1" or os.getenv("VERCEL") == "1"
+    host = config.get("HOST") or ""
+    port = config.get("PORT") or ""
+    if prefer_ipv4 and host:
+        try:
+            port_int = int(port) if str(port).strip() else 5432
+            infos = socket.getaddrinfo(host, port_int, family=socket.AF_INET, type=socket.SOCK_STREAM)
+            if infos:
+                config["HOST"] = infos[0][4][0]
+        except Exception:
+            pass
+    return config
 
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-secret-key-change-me")
