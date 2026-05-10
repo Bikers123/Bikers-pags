@@ -63,7 +63,12 @@ def _parse_database_url(database_url: str) -> dict:
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-secret-key-change-me")
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
-ALLOWED_HOSTS = [h for h in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h]
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
+_vercel_url = (os.getenv("VERCEL_URL") or "").strip()
+if _vercel_url and _vercel_url not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_vercel_url)
+if (os.getenv("VERCEL") == "1" or _vercel_url.endswith(".vercel.app")) and ".vercel.app" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(".vercel.app")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -77,6 +82,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -134,10 +140,19 @@ TIME_ZONE = "America/Bogota"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-MEDIA_URL = "media/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+if os.getenv("VERCEL") == "1":
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    WHITENOISE_USE_FINDERS = True
+    CSRF_TRUSTED_ORIGINS = ["https://*.vercel.app"]
+    if _vercel_url:
+        CSRF_TRUSTED_ORIGINS.append(f"https://{_vercel_url}")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "club.User"
