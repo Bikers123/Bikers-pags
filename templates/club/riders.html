@@ -1,0 +1,77 @@
+{% extends 'club/base.html' %}
+{% block body_class %}page page--riders{% endblock %}
+{% block title %}Riders | Tesalia Motoclub{% endblock %}
+
+{% block nav %}
+  <header class="topbar">
+    <div class="topbar__left">
+      <a class="logo" href="{% url 'feed' %}">TM</a>
+    </div>
+    <div class="topbar__center">
+      <nav class="topbar__tabs" data-topbar-tabs>
+        <a class="topbar__tab" href="{% url 'feed' %}"><span class="mi material-symbols-rounded" aria-hidden="true">home</span>Inicio</a>
+        <a class="topbar__tab is-active" href="{% url 'riders' %}"><span class="mi material-symbols-rounded" aria-hidden="true">two_wheeler</span>Riders</a>
+        <span class="topbar__indicator" data-tab-indicator aria-hidden="true"></span>
+      </nav>
+    </div>
+    <div class="topbar__right">
+      <a class="topbar__user" href="{% url 'rider_detail' request.user.username %}">
+        {% with photo=request.user.photo_url %}
+          <span class="avatar avatar--sm"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+        {% endwith %}
+        <span class="topbar__name">{{ request.user.get_full_name|default:request.user.username }}</span>
+      </a>
+      <a class="btn btn--ghost btn--sm" href="{% url 'logout' %}"><span class="mi material-symbols-rounded" aria-hidden="true">logout</span>Salir</a>
+    </div>
+  </header>
+{% endblock %}
+
+{% block content %}
+  <section class="riders">
+    <div class="panel panel--decor">
+      {% with cover=request.user.cover_url %}
+        {% if cover %}
+          <div class="panel__bg" style="background-image:url('{{ cover }}')" aria-hidden="true"></div>
+        {% endif %}
+      {% endwith %}
+      <div class="panel__title">Motociclistas</div>
+      <form class="search search--page" method="get">
+        <input class="search__input" type="search" name="q" value="{{ q }}" placeholder="Buscar por usuario o nombre..." />
+        <button class="btn btn--ghost btn--sm" type="submit"><span class="mi material-symbols-rounded" aria-hidden="true">search</span>Buscar</button>
+      </form>
+      <div class="grid grid--3 riders__grid">
+        {% for u in riders %}
+          <div class="usercard" data-user-card data-user-id="{{ u.id }}">
+            {% with cover=u.cover_url %}
+              {% if cover %}
+                <div class="usercard__bg" style="background-image:url('{{ cover }}')" aria-hidden="true"></div>
+              {% endif %}
+            {% endwith %}
+            <a class="usercard__top" href="{% url 'rider_detail' u.username %}">
+              {% with photo=u.photo_url %}
+                <span class="avatar avatar--lg"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+              {% endwith %}
+              <div class="usercard__name">{{ u.get_full_name|default:u.username }}</div>
+              <div class="usercard__handle">@{{ u.username }}</div>
+            </a>
+            <div class="usercard__bottom">
+              {% if u.id != request.user.id %}
+                <button class="btn btn--primary btn--sm" type="button" data-add-friend>Agregar amigo</button>
+              {% else %}
+                <a class="btn btn--ghost btn--sm" href="{% url 'rider_detail' u.username %}">Mi perfil</a>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <div class="muted">No hay resultados.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    window.TesaliaPage = { name: "riders" };
+  </script>
+{% endblock %}

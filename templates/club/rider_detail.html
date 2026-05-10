@@ -1,0 +1,121 @@
+{% extends 'club/base.html' %}
+{% block body_class %}page page--profile{% endblock %}
+{% block title %}Perfil | {{ rider.username }}{% endblock %}
+
+{% block nav %}
+  <header class="topbar">
+    <div class="topbar__left">
+      <a class="logo" href="{% url 'feed' %}">TM</a>
+    </div>
+    <div class="topbar__center">
+      <nav class="topbar__tabs" data-topbar-tabs>
+        <a class="topbar__tab" href="{% url 'feed' %}"><span class="mi material-symbols-rounded" aria-hidden="true">home</span>Inicio</a>
+        <a class="topbar__tab is-active" href="{% url 'riders' %}"><span class="mi material-symbols-rounded" aria-hidden="true">two_wheeler</span>Riders</a>
+        <span class="topbar__indicator" data-tab-indicator aria-hidden="true"></span>
+      </nav>
+    </div>
+    <div class="topbar__right">
+      <a class="topbar__user" href="{% url 'rider_detail' request.user.username %}">
+        {% with photo=request.user.photo_url %}
+          <span class="avatar avatar--sm"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+        {% endwith %}
+        <span class="topbar__name">{{ request.user.get_full_name|default:request.user.username }}</span>
+      </a>
+      <a class="btn btn--ghost btn--sm" href="{% url 'logout' %}"><span class="mi material-symbols-rounded" aria-hidden="true">logout</span>Salir</a>
+    </div>
+  </header>
+{% endblock %}
+
+{% block content %}
+  <section class="profile">
+    <div class="profile__hero" data-animate="hero">
+      {% if profile.cover_photo_file %}
+        <div class="profile__cover" style="background-image:url('{{ profile.cover_photo_file.url }}')"></div>
+      {% else %}
+        {% with cover=profile.cover_photo_url %}
+          <div class="profile__cover"{% if cover %} style="background-image:url('{{ cover }}')"{% endif %}></div>
+        {% endwith %}
+      {% endif %}
+      <div class="profile__card" data-user-card data-user-id="{{ rider.id }}">
+        {% with photo=rider.photo_url %}
+          <span class="avatar avatar--xl profile__avatar"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+        {% endwith %}
+        <div class="profile__meta">
+          <div class="profile__name">{{ rider.get_full_name|default:rider.username }}</div>
+          <div class="profile__handle">@{{ rider.username }}</div>
+          {% if profile.residence_city or profile.residence_state %}
+            <div class="profile__line"><span class="mi material-symbols-rounded" aria-hidden="true">location_on</span>{{ profile.residence_city }}{% if profile.residence_city and profile.residence_state %},{% endif %} {{ profile.residence_state }}</div>
+          {% endif %}
+          <div class="profile__chips">
+            <span class="chip chip--muted">{{ rider.user_type }}</span>
+            {% if not can_view_private %}
+              <span class="chip chip--warn">Datos privados (solo admin)</span>
+            {% endif %}
+          </div>
+          {% if profile.bio %}
+            <div class="profile__bio">{{ profile.bio }}</div>
+          {% endif %}
+        </div>
+        <div class="profile__actions">
+          {% if rider.id != request.user.id %}
+            <button class="btn btn--primary btn--sm" type="button" data-add-friend>Agregar amigo</button>
+          {% else %}
+            <a class="btn btn--primary btn--sm" href="{% url 'me_edit' %}"><span class="mi material-symbols-rounded" aria-hidden="true">edit</span>Editar perfil</a>
+          {% endif %}
+        </div>
+      </div>
+      {% if rider.id == request.user.id %}
+        <div class="profile__cover-actions">
+          <a class="btn btn--ghost btn--sm" href="{% url 'me_edit' %}"><span class="mi material-symbols-rounded" aria-hidden="true">add_a_photo</span>Foto perfil</a>
+          <a class="btn btn--ghost btn--sm" href="{% url 'me_edit' %}"><span class="mi material-symbols-rounded" aria-hidden="true">add_photo_alternate</span>Portada</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="profile__grid">
+      <div class="panel">
+        <div class="panel__title">Contacto</div>
+        <div class="kv">
+          <div class="kv__row"><div class="kv__k">Correo</div><div class="kv__v">{{ rider.email|default:'-' }}</div></div>
+          <div class="kv__row"><div class="kv__k">Teléfono móvil</div><div class="kv__v">{{ profile.phone_mobile|default:'-' }}</div></div>
+          <div class="kv__row"><div class="kv__k">Teléfono trabajo</div><div class="kv__v">{{ profile.phone_work|default:'-' }}</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__title">Datos del rider</div>
+        <div class="kv">
+          <div class="kv__row"><div class="kv__k">Documento</div><div class="kv__v">{% if can_view_private %}{{ profile.document_id|default:'-' }}{% else %}—{% endif %}</div></div>
+          <div class="kv__row"><div class="kv__k">Sexo</div><div class="kv__v">{{ profile.get_sex_display|default:'-' }}</div></div>
+          <div class="kv__row"><div class="kv__k">Edad</div><div class="kv__v">{{ profile.age|default:'-' }}</div></div>
+          <div class="kv__row"><div class="kv__k">Nacimiento</div><div class="kv__v">{{ profile.birthdate|default:'-' }}</div></div>
+          <div class="kv__row"><div class="kv__k">Residencia</div><div class="kv__v">{{ profile.residence_city|default:'-' }}{% if profile.residence_state %} {{ profile.residence_state }}{% endif %}</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__title">Salud</div>
+        <div class="kv">
+          <div class="kv__row"><div class="kv__k">Grupo sanguíneo</div><div class="kv__v">{% if can_view_private %}{{ profile.blood_type|default:'-' }}{% else %}—{% endif %}</div></div>
+          <div class="kv__row"><div class="kv__k">Alergias</div><div class="kv__v">{% if can_view_private %}{% if profile.allergic is None %}-{% elif profile.allergic %}Sí{% else %}No{% endif %}{% else %}—{% endif %}</div></div>
+          <div class="kv__row"><div class="kv__k">Detalle</div><div class="kv__v">{% if can_view_private %}{{ profile.allergy_details|default:'-' }}{% else %}—{% endif %}</div></div>
+          <div class="kv__row"><div class="kv__k">Seguro médico</div><div class="kv__v">{% if can_view_private %}{% if profile.has_medical_insurance is None %}-{% elif profile.has_medical_insurance %}Sí{% else %}No{% endif %}{% else %}—{% endif %}</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__title">Moto / Vehículo</div>
+        <div class="kv">
+          <div class="kv__row"><div class="kv__k">Moto</div><div class="kv__v">{% if can_view_private %}{{ profile.moto_model|default:'-' }}{% else %}—{% endif %}</div></div>
+          <div class="kv__row"><div class="kv__k">Placa</div><div class="kv__v">{% if can_view_private %}{{ profile.moto_plate|default:'-' }}{% else %}—{% endif %}</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    window.TesaliaPage = { name: "profile" };
+  </script>
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends 'club/base.html' %}
+{% block body_class %}page page--profile{% endblock %}
+{% block title %}Editar perfil{% endblock %}
+
+{% block nav %}
+  <header class="topbar">
+    <div class="topbar__left">
+      <a class="logo" href="{% url 'feed' %}">TM</a>
+    </div>
+    <div class="topbar__center">
+      <nav class="topbar__tabs" data-topbar-tabs>
+        <a class="topbar__tab" href="{% url 'feed' %}"><span class="mi material-symbols-rounded" aria-hidden="true">home</span>Inicio</a>
+        <a class="topbar__tab" href="{% url 'riders' %}"><span class="mi material-symbols-rounded" aria-hidden="true">two_wheeler</span>Riders</a>
+        <a class="topbar__tab is-active" href="{% url 'me_edit' %}"><span class="mi material-symbols-rounded" aria-hidden="true">edit</span>Editar</a>
+        <span class="topbar__indicator" data-tab-indicator aria-hidden="true"></span>
+      </nav>
+    </div>
+    <div class="topbar__right">
+      <a class="topbar__user" href="{% url 'rider_detail' request.user.username %}">
+        {% with photo=request.user.photo_url %}
+          <span class="avatar avatar--sm"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+        {% endwith %}
+        <span class="topbar__name">{{ request.user.get_full_name|default:request.user.username }}</span>
+      </a>
+      <a class="btn btn--ghost btn--sm" href="{% url 'logout' %}"><span class="mi material-symbols-rounded" aria-hidden="true">logout</span>Salir</a>
+    </div>
+  </header>
+{% endblock %}
+
+{% block content %}
+  <section class="profile">
+    <div class="profile__hero" data-animate="hero">
+      {% if profile.cover_photo_file %}
+        <div class="profile__cover" id="coverPreview" style="background-image:url('{{ profile.cover_photo_file.url }}')"></div>
+      {% else %}
+        {% with cover=profile.cover_photo_url %}
+          <div class="profile__cover" id="coverPreview"{% if cover %} style="background-image:url('{{ cover }}')"{% endif %}></div>
+        {% endwith %}
+      {% endif %}
+      <div class="profile__card">
+        {% with photo=request.user.photo_url %}
+          <span class="avatar avatar--xl profile__avatar" id="avatarPreview"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+        {% endwith %}
+        <div class="profile__meta">
+          <div class="profile__name">{{ request.user.get_full_name|default:request.user.username }}</div>
+          <div class="profile__handle">@{{ request.user.username }}</div>
+          <div class="profile__chips">
+            <span class="chip chip--muted">Edición</span>
+          </div>
+        </div>
+        <div class="profile__actions">
+          <a class="btn btn--ghost btn--sm" href="{% url 'rider_detail' request.user.username %}"><span class="mi material-symbols-rounded" aria-hidden="true">arrow_back</span>Volver</a>
+        </div>
+      </div>
+      <div class="profile__edit-actions">
+        <button class="btn btn--ghost btn--sm" type="button" data-upload-trigger="profile"><span class="mi material-symbols-rounded" aria-hidden="true">photo_camera</span>Foto perfil</button>
+        <button class="btn btn--ghost btn--sm" type="button" data-upload-trigger="cover"><span class="mi material-symbols-rounded" aria-hidden="true">photo_camera</span>Portada</button>
+      </div>
+    </div>
+
+    <div class="profile__grid profile__grid--edit">
+      <div class="panel">
+        <div class="panel__title">Apariencia</div>
+        <form method="post" enctype="multipart/form-data" novalidate class="form" data-photo-form>
+          {% csrf_token %}
+          <div class="uploader">
+            <div class="uploader__title">Foto de perfil</div>
+            <div class="uploader__hint">Ideal: 400×400 (cuadrada). Formatos: JPG/PNG.</div>
+            <div class="dropzone" data-dropzone="profile" data-preview="#avatarPreview">
+              <div class="dropzone__icon"><span class="material-symbols-rounded" aria-hidden="true">add_a_photo</span></div>
+              <div class="dropzone__text">Seleccionar desde galería o arrastrar aquí</div>
+              <div class="dropzone__sub">Se muestra como avatar (recorte circular).</div>
+              {{ form.profile_photo_file }}
+              {% for error in form.profile_photo_file.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="uploader">
+            <div class="uploader__title">Foto de portada</div>
+            <div class="uploader__hint">Ideal: 1640×624 (horizontal). Formatos: JPG/PNG.</div>
+            <div class="dropzone dropzone--wide" data-dropzone="cover" data-preview="#coverPreview">
+              <div class="dropzone__icon"><span class="material-symbols-rounded" aria-hidden="true">add_photo_alternate</span></div>
+              <div class="dropzone__text">Seleccionar desde galería o arrastrar aquí</div>
+              <div class="dropzone__sub">Recomendado: imagen horizontal para verse tipo Facebook.</div>
+              {{ form.cover_photo_file }}
+              {% for error in form.cover_photo_file.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <details class="advanced">
+            <summary class="advanced__summary"><span class="mi material-symbols-rounded" aria-hidden="true">link</span>Usar URL (opcional)</summary>
+            <div class="field">
+              <label class="field__label" for="{{ form.profile_photo_url.id_for_label }}">Foto de perfil (URL)</label>
+              {{ form.profile_photo_url }}
+              {% for error in form.profile_photo_url.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="field">
+              <label class="field__label" for="{{ form.cover_photo_url.id_for_label }}">Foto de portada (URL)</label>
+              {{ form.cover_photo_url }}
+              {% for error in form.cover_photo_url.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+            </div>
+          </details>
+
+          <div class="panel__title">Info</div>
+          <div class="grid grid--2">
+            <div class="field">
+              <label class="field__label" for="{{ form.first_name.id_for_label }}">Nombre(s)</label>
+              {{ form.first_name }}
+              {% for error in form.first_name.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="field">
+              <label class="field__label" for="{{ form.last_name.id_for_label }}">Apellidos</label>
+              {{ form.last_name }}
+              {% for error in form.last_name.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+          <div class="field">
+            <label class="field__label" for="{{ form.email.id_for_label }}">Correo</label>
+            {{ form.email }}
+            {% for error in form.email.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="field">
+            <label class="field__label" for="{{ form.bio.id_for_label }}">Bio</label>
+            {{ form.bio }}
+            {% for error in form.bio.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="grid grid--2">
+            <div class="field">
+              <label class="field__label" for="{{ form.residence_city.id_for_label }}">Ciudad</label>
+              {{ form.residence_city }}
+              {% for error in form.residence_city.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="field">
+              <label class="field__label" for="{{ form.residence_state.id_for_label }}">Estado</label>
+              {{ form.residence_state }}
+              {% for error in form.residence_state.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+          <div class="field">
+            <label class="field__label" for="{{ form.occupation.id_for_label }}">Ocupación</label>
+            {{ form.occupation }}
+            {% for error in form.occupation.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <button class="btn btn--primary btn--wide" type="submit"><span class="mi material-symbols-rounded" aria-hidden="true">save</span>Guardar cambios</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel__title">Tips</div>
+        <div class="kv">
+          <div class="kv__row"><div class="kv__k">Foto</div><div class="kv__v">Pega una URL pública (https://...).</div></div>
+          <div class="kv__row"><div class="kv__k">Portada</div><div class="kv__v">Usa una imagen horizontal para que se vea mejor.</div></div>
+          <div class="kv__row"><div class="kv__k">Bio</div><div class="kv__v">Cuenta tu estilo de rodada o tu moto.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    window.TesaliaPage = { name: "profile" };
+  </script>
+{% endblock %}

@@ -1,0 +1,272 @@
+from __future__ import annotations
+
+from django import forms
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+
+from .models import EmergencyContact, RiderProfile, User
+
+
+class LoginForm(AuthenticationForm):
+    username = forms.CharField(label="Usuario o Email")
+    password = forms.CharField(widget=forms.PasswordInput, label="Contraseña")
+
+
+class RegisterForm(UserCreationForm):
+    email = forms.EmailField(required=True, label="Correo electrónico")
+
+    document_id = forms.CharField(required=False, label="Documento de Identidad")
+    sex = forms.ChoiceField(required=False, choices=RiderProfile.Sex.choices, label="Sexo")
+    age = forms.IntegerField(required=False, min_value=0, label="Edad")
+    birthdate = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}), label="Fecha de nacimiento")
+
+    residence_address_line1 = forms.CharField(required=False, label="Dirección de residencia")
+    residence_address_line2 = forms.CharField(required=False, label="Barrio")
+    residence_city = forms.CharField(required=False, label="Ciudad")
+    residence_state = forms.CharField(required=False, label="País/Estado")
+    residence_postal = forms.CharField(required=False, label="Código Postal")
+    residence_country = forms.CharField(required=False, label="País")
+
+    birth_place_city = forms.CharField(required=False, label="Lugar de nacimiento (Ciudad)")
+    birth_place_country = forms.CharField(required=False, label="Lugar de nacimiento (País)")
+
+    phone_home = forms.CharField(required=False, label="Teléfono habitación")
+    phone_mobile = forms.CharField(required=False, label="Teléfono móvil")
+    phone_work = forms.CharField(required=False, label="Teléfono trabajo")
+
+    occupation = forms.CharField(required=False, label="Ocupación")
+    contact_email = forms.EmailField(required=False, label="Correo de contacto (alterno)")
+
+    blood_type = forms.ChoiceField(
+        required=False,
+        choices=[("", "Seleccione")] + [(x, x) for x in ["A", "B", "AB", "O", "RH+", "RH-"]],
+        label="Grupo sanguíneo",
+    )
+    allergic = forms.ChoiceField(required=False, choices=[("", "Seleccione"), ("1", "Sí"), ("0", "No")], label="¿Es alérgico?")
+    allergy_details = forms.CharField(required=False, label="Alergias (especifique)")
+    physical_condition = forms.ChoiceField(required=False, choices=[("", "Seleccione"), ("1", "Sí"), ("0", "No")], label="¿Padecimiento físico?")
+    physical_condition_details = forms.CharField(required=False, label="Padecimiento (especifique)")
+    medical_treatment = forms.ChoiceField(required=False, choices=[("", "Seleccione"), ("1", "Sí"), ("0", "No")], label="¿Tratamiento médico?")
+    medical_treatment_details = forms.CharField(required=False, label="Tratamiento (especifique)")
+    medication = forms.ChoiceField(required=False, choices=[("", "Seleccione"), ("1", "Sí"), ("0", "No")], label="¿Toma medicamentos?")
+    medication_supply = forms.CharField(required=False, label="Forma de suministro (especifique)")
+    has_medical_insurance = forms.ChoiceField(required=False, choices=[("", "Seleccione"), ("1", "Sí"), ("0", "No")], label="¿Posee seguro médico?")
+    medical_insurance_details = forms.CharField(required=False, label="Seguro médico (especifique)")
+
+    vehicle_model = forms.CharField(required=False, label="Vehículo modelo")
+    vehicle_plate = forms.CharField(required=False, label="Vehículo placa")
+    moto_model = forms.CharField(required=False, label="Moto modelo")
+    moto_plate = forms.CharField(required=False, label="Moto placa")
+
+    emergency_primary_first_name = forms.CharField(required=False, label="Emergencia (principal) - Nombres")
+    emergency_primary_last_name = forms.CharField(required=False, label="Emergencia (principal) - Apellidos")
+    emergency_primary_relationship = forms.CharField(required=False, label="Emergencia (principal) - Parentesco")
+    emergency_primary_phone = forms.CharField(required=False, label="Emergencia (principal) - Teléfono")
+
+    emergency_secondary_first_name = forms.CharField(required=False, label="Emergencia (alternativo) - Nombres")
+    emergency_secondary_last_name = forms.CharField(required=False, label="Emergencia (alternativo) - Apellidos")
+    emergency_secondary_phone = forms.CharField(required=False, label="Emergencia (alternativo) - Teléfono")
+
+    profile_photo_url = forms.URLField(required=False, label="Foto (URL)")
+
+    accepts_liability_release = forms.BooleanField(required=False, label="Acepto liberación de responsabilidad")
+    accepts_data_treatment = forms.BooleanField(required=False, label="Acepto tratamiento de datos")
+    allows_photos = forms.BooleanField(required=False, label="Autorizo fotografías")
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ("username", "first_name", "last_name", "email")
+
+    def clean(self):
+        cleaned = super().clean()
+        email = (cleaned.get("email") or "").strip().lower()
+        if email and User.objects.filter(email__iexact=email).exists():
+            self.add_error("email", "Este correo ya está registrado.")
+        return cleaned
+
+    @staticmethod
+    def _to_bool(val: str | None) -> bool | None:
+        if val in (None, ""):
+            return None
+        if val == "1":
+            return True
+        if val == "0":
+            return False
+        return None
+
+    def save(self, commit: bool = True):
+        user: User = super().save(commit=False)
+        user.email = (self.cleaned_data.get("email") or "").strip().lower()
+        user.user_type = User.UserType.MOTOCICLISTA
+        if commit:
+            user.save()
+
+        profile, _ = RiderProfile.objects.get_or_create(user=user)
+        profile.document_id = self.cleaned_data.get("document_id") or ""
+        profile.sex = self.cleaned_data.get("sex") or ""
+        profile.age = self.cleaned_data.get("age")
+        profile.birthdate = self.cleaned_data.get("birthdate")
+
+        profile.residence_address_line1 = self.cleaned_data.get("residence_address_line1") or ""
+        profile.residence_address_line2 = self.cleaned_data.get("residence_address_line2") or ""
+        profile.residence_city = self.cleaned_data.get("residence_city") or ""
+        profile.residence_state = self.cleaned_data.get("residence_state") or ""
+        profile.residence_postal = self.cleaned_data.get("residence_postal") or ""
+        profile.residence_country = self.cleaned_data.get("residence_country") or ""
+
+        profile.birth_place_city = self.cleaned_data.get("birth_place_city") or ""
+        profile.birth_place_country = self.cleaned_data.get("birth_place_country") or ""
+
+        profile.phone_home = self.cleaned_data.get("phone_home") or ""
+        profile.phone_mobile = self.cleaned_data.get("phone_mobile") or ""
+        profile.phone_work = self.cleaned_data.get("phone_work") or ""
+
+        profile.occupation = self.cleaned_data.get("occupation") or ""
+        profile.contact_email = (self.cleaned_data.get("contact_email") or "").strip().lower()
+
+        profile.blood_type = self.cleaned_data.get("blood_type") or ""
+        profile.allergic = self._to_bool(self.cleaned_data.get("allergic"))
+        profile.allergy_details = self.cleaned_data.get("allergy_details") or ""
+        profile.physical_condition = self._to_bool(self.cleaned_data.get("physical_condition"))
+        profile.physical_condition_details = self.cleaned_data.get("physical_condition_details") or ""
+        profile.medical_treatment = self._to_bool(self.cleaned_data.get("medical_treatment"))
+        profile.medical_treatment_details = self.cleaned_data.get("medical_treatment_details") or ""
+        profile.medication = self._to_bool(self.cleaned_data.get("medication"))
+        profile.medication_supply = self.cleaned_data.get("medication_supply") or ""
+        profile.has_medical_insurance = self._to_bool(self.cleaned_data.get("has_medical_insurance"))
+        profile.medical_insurance_details = self.cleaned_data.get("medical_insurance_details") or ""
+
+        profile.vehicle_model = self.cleaned_data.get("vehicle_model") or ""
+        profile.vehicle_plate = self.cleaned_data.get("vehicle_plate") or ""
+        profile.moto_model = self.cleaned_data.get("moto_model") or ""
+        profile.moto_plate = self.cleaned_data.get("moto_plate") or ""
+
+        profile.profile_photo_url = self.cleaned_data.get("profile_photo_url") or ""
+        profile.accepts_liability_release = bool(self.cleaned_data.get("accepts_liability_release"))
+        profile.accepts_data_treatment = bool(self.cleaned_data.get("accepts_data_treatment"))
+        profile.allows_photos = bool(self.cleaned_data.get("allows_photos"))
+        if commit:
+            profile.save()
+
+        if commit:
+            self._upsert_emergency_contact(
+                profile=profile,
+                contact_type=EmergencyContact.ContactType.PRIMARY,
+                first_name=self.cleaned_data.get("emergency_primary_first_name") or "",
+                last_name=self.cleaned_data.get("emergency_primary_last_name") or "",
+                relationship=self.cleaned_data.get("emergency_primary_relationship") or "",
+                phone=self.cleaned_data.get("emergency_primary_phone") or "",
+            )
+            self._upsert_emergency_contact(
+                profile=profile,
+                contact_type=EmergencyContact.ContactType.SECONDARY,
+                first_name=self.cleaned_data.get("emergency_secondary_first_name") or "",
+                last_name=self.cleaned_data.get("emergency_secondary_last_name") or "",
+                relationship="",
+                phone=self.cleaned_data.get("emergency_secondary_phone") or "",
+            )
+
+        return user
+
+    @staticmethod
+    def _upsert_emergency_contact(
+        *,
+        profile: RiderProfile,
+        contact_type: str,
+        first_name: str,
+        last_name: str,
+        relationship: str,
+        phone: str,
+    ) -> None:
+        if not (first_name.strip() or last_name.strip() or phone.strip()):
+            return
+        EmergencyContact.objects.update_or_create(
+            profile=profile,
+            contact_type=contact_type,
+            defaults={
+                "first_name": first_name.strip(),
+                "last_name": last_name.strip(),
+                "relationship": relationship.strip(),
+                "phone": phone.strip(),
+            },
+        )
+
+
+class ProfileEditForm(forms.Form):
+    first_name = forms.CharField(required=False, label="Nombre(s)")
+    last_name = forms.CharField(required=False, label="Apellidos")
+    email = forms.EmailField(required=False, label="Correo")
+
+    profile_photo_url = forms.URLField(required=False, label="Foto de perfil (URL)")
+    profile_photo_file = forms.FileField(
+        required=False,
+        label="Foto de perfil",
+        widget=forms.FileInput(attrs={"accept": "image/*"}),
+    )
+    cover_photo_url = forms.URLField(required=False, label="Foto de portada (URL)")
+    cover_photo_file = forms.FileField(
+        required=False,
+        label="Foto de portada",
+        widget=forms.FileInput(attrs={"accept": "image/*"}),
+    )
+    bio = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 4}), label="Bio")
+
+    residence_city = forms.CharField(required=False, label="Ciudad")
+    residence_state = forms.CharField(required=False, label="Estado")
+    occupation = forms.CharField(required=False, label="Ocupación")
+
+    def __init__(self, *args, user: User, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.profile, _ = RiderProfile.objects.get_or_create(user=user)
+        if not self.is_bound:
+            self.initial = {
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "profile_photo_url": self.profile.profile_photo_url,
+                "cover_photo_url": getattr(self.profile, "cover_photo_url", ""),
+                "bio": getattr(self.profile, "bio", ""),
+                "residence_city": self.profile.residence_city,
+                "residence_state": self.profile.residence_state,
+                "occupation": self.profile.occupation,
+            }
+
+    def clean_email(self):
+        email = (self.cleaned_data.get("email") or "").strip().lower()
+        if email and User.objects.filter(email__iexact=email).exclude(id=self.user.id).exists():
+            raise forms.ValidationError("Este correo ya está registrado.")
+        return email
+
+    def save(self):
+        self.user.first_name = (self.cleaned_data.get("first_name") or "").strip()
+        self.user.last_name = (self.cleaned_data.get("last_name") or "").strip()
+        self.user.email = (self.cleaned_data.get("email") or "").strip().lower()
+        self.user.save(update_fields=["first_name", "last_name", "email"])
+
+        self.profile.profile_photo_url = (self.cleaned_data.get("profile_photo_url") or "").strip()
+        self.profile.cover_photo_url = (self.cleaned_data.get("cover_photo_url") or "").strip()
+        profile_file = self.cleaned_data.get("profile_photo_file")
+        if profile_file:
+            self.profile.profile_photo_file = profile_file
+            self.profile.profile_photo_url = ""
+        cover_file = self.cleaned_data.get("cover_photo_file")
+        if cover_file:
+            self.profile.cover_photo_file = cover_file
+            self.profile.cover_photo_url = ""
+        self.profile.bio = (self.cleaned_data.get("bio") or "").strip()
+        self.profile.residence_city = (self.cleaned_data.get("residence_city") or "").strip()
+        self.profile.residence_state = (self.cleaned_data.get("residence_state") or "").strip()
+        self.profile.occupation = (self.cleaned_data.get("occupation") or "").strip()
+        self.profile.save(
+            update_fields=[
+                "profile_photo_url",
+                "profile_photo_file",
+                "cover_photo_url",
+                "cover_photo_file",
+                "bio",
+                "residence_city",
+                "residence_state",
+                "occupation",
+                "updated_at",
+            ]
+        )

@@ -1,0 +1,59 @@
+{% extends 'club/base.html' %}
+{% block body_class %}page page--auth{% endblock %}
+{% block title %}Login | Tesalia Motoclub{% endblock %}
+
+{% block content %}
+  <section class="auth auth--center">
+    <div class="authcard" data-animate="auth">
+      <div class="authcard__brand">
+        <div class="brand brand--compact">
+          <div class="brand__mark">TM</div>
+          <div class="brand__text">
+            <div class="brand__title">Tesalia Motoclub</div>
+            <div class="brand__tagline">Acceso a la red de riders</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="authcard__title">Iniciar sesión</div>
+      <div class="authcard__subtitle">Entra para ver el feed, buscar riders y contactos.</div>
+
+      <form class="authcard__form" method="post" novalidate>
+        {% csrf_token %}
+        <div class="authcard__errors">
+          {% for error in form.non_field_errors %}
+            <div class="field__error">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="id_username">Usuario o correo</label>
+          {{ form.username }}
+          {% for error in form.username.errors %}
+            <div class="field__error">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="id_password">Contraseña</label>
+          {{ form.password }}
+          {% for error in form.password.errors %}
+            <div class="field__error">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <button class="btn btn--primary btn--wide" type="submit"><span class="mi material-symbols-rounded" aria-hidden="true">login</span>Entrar</button>
+
+        <div class="authcard__divider"><span>o</span></div>
+
+        <a class="btn btn--ghost btn--wide" href="{% url 'register' %}"><span class="mi material-symbols-rounded" aria-hidden="true">person_add</span>Crear cuenta</a>
+      </form>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    window.TesaliaPage = { name: "login" };
+  </script>
+{% endblock %}

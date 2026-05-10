@@ -1,0 +1,295 @@
+{% extends 'club/base.html' %}
+{% block body_class %}page page--auth{% endblock %}
+{% block title %}Registro | Tesalia Motoclub{% endblock %}
+
+{% block content %}
+  <section class="register">
+    <div class="register__header">
+      <div class="brand brand--compact">
+        <div class="brand__mark">TM</div>
+        <div class="brand__text">
+          <div class="brand__title">Tesalia Motoclub</div>
+          <div class="brand__tagline">Pre-inscripción / Registro</div>
+        </div>
+      </div>
+      <div class="register__header-actions">
+        <a class="btn btn--ghost" href="{% url 'login' %}"><span class="mi material-symbols-rounded" aria-hidden="true">login</span>Ya tengo cuenta</a>
+      </div>
+    </div>
+
+    <form class="register__form" method="post" novalidate>
+      {% csrf_token %}
+      {% if form.errors %}
+        <div class="panel">
+          <div class="panel__title">Errores</div>
+          {{ form.non_field_errors }}
+          {% for field in form %}
+            {% for error in field.errors %}
+              <div class="muted">{{ field.label }}: {{ error }}</div>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="accordion" data-accordion>
+        <button class="accordion__head" type="button" data-accordion-toggle>
+          <span>DATOS PERSONALES</span><span class="accordion__chev">▾</span>
+        </button>
+        <div class="accordion__body">
+          <div class="grid grid--2">
+            <div class="field">
+              <label class="field__label" for="id_username">Usuario</label>
+              {{ form.username }}
+              {% for error in form.username.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_email">Correo</label>
+              {{ form.email }}
+              {% for error in form.email.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_first_name">Nombres</label>
+              {{ form.first_name }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_last_name">Apellidos</label>
+              {{ form.last_name }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_document_id">Documento</label>
+              {{ form.document_id }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_sex">Sexo</label>
+              {{ form.sex }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_age">Edad</label>
+              {{ form.age }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_birthdate">Fecha de nacimiento</label>
+              {{ form.birthdate }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion" data-accordion>
+        <button class="accordion__head" type="button" data-accordion-toggle>
+          <span>DATOS CONTACTO</span><span class="accordion__chev">▾</span>
+        </button>
+        <div class="accordion__body">
+          <div class="grid grid--2">
+            <div class="field">
+              <label class="field__label" for="id_residence_address_line1">Dirección</label>
+              {{ form.residence_address_line1 }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_residence_address_line2">Barrio</label>
+              {{ form.residence_address_line2 }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_residence_city">Ciudad</label>
+              {{ form.residence_city }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_residence_state">País/Estado</label>
+              {{ form.residence_state }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_phone_home">Tel. habitación</label>
+              {{ form.phone_home }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_phone_mobile">Tel. móvil</label>
+              {{ form.phone_mobile }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_phone_work">Tel. trabajo</label>
+              {{ form.phone_work }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_profile_photo_url">Foto (URL)</label>
+              {{ form.profile_photo_url }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion" data-accordion>
+        <button class="accordion__head" type="button" data-accordion-toggle>
+          <span>DATOS PROFESIONALES / LABORALES</span><span class="accordion__chev">▾</span>
+        </button>
+        <div class="accordion__body">
+          <div class="grid grid--2">
+            <div class="field">
+              <label class="field__label" for="id_occupation">Ocupación</label>
+              {{ form.occupation }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_contact_email">Correo alterno</label>
+              {{ form.contact_email }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion" data-accordion>
+        <button class="accordion__head" type="button" data-accordion-toggle>
+          <span>REGISTRO DE SALUD</span><span class="accordion__chev">▾</span>
+        </button>
+        <div class="accordion__body">
+          <div class="grid grid--2">
+            <div class="field">
+              <label class="field__label" for="id_blood_type">Grupo sanguíneo</label>
+              {{ form.blood_type }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_allergic">¿Es alérgico?</label>
+              {{ form.allergic }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_allergy_details">Alergias (detalle)</label>
+              {{ form.allergy_details }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_physical_condition">¿Padecimiento físico?</label>
+              {{ form.physical_condition }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_physical_condition_details">Padecimiento (detalle)</label>
+              {{ form.physical_condition_details }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_medical_treatment">¿Tratamiento médico?</label>
+              {{ form.medical_treatment }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_medical_treatment_details">Tratamiento (detalle)</label>
+              {{ form.medical_treatment_details }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_medication">¿Toma medicamentos?</label>
+              {{ form.medication }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_medication_supply">Forma de suministro</label>
+              {{ form.medication_supply }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_has_medical_insurance">¿Seguro médico?</label>
+              {{ form.has_medical_insurance }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_medical_insurance_details">Seguro (detalle)</label>
+              {{ form.medical_insurance_details }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion" data-accordion>
+        <button class="accordion__head" type="button" data-accordion-toggle>
+          <span>INFORMACIÓN PARA CASOS DE EMERGENCIA</span><span class="accordion__chev">▾</span>
+        </button>
+        <div class="accordion__body">
+          <div class="grid grid--2">
+            <div class="field">
+              <label class="field__label" for="id_emergency_primary_first_name">Contacto principal (nombres)</label>
+              {{ form.emergency_primary_first_name }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_emergency_primary_last_name">Contacto principal (apellidos)</label>
+              {{ form.emergency_primary_last_name }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_emergency_primary_relationship">Parentesco</label>
+              {{ form.emergency_primary_relationship }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_emergency_primary_phone">Teléfono</label>
+              {{ form.emergency_primary_phone }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_emergency_secondary_first_name">Contacto alterno (nombres)</label>
+              {{ form.emergency_secondary_first_name }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_emergency_secondary_last_name">Contacto alterno (apellidos)</label>
+              {{ form.emergency_secondary_last_name }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_emergency_secondary_phone">Teléfono</label>
+              {{ form.emergency_secondary_phone }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion" data-accordion>
+        <button class="accordion__head" type="button" data-accordion-toggle>
+          <span>MOTO O VEHÍCULO</span><span class="accordion__chev">▾</span>
+        </button>
+        <div class="accordion__body">
+          <div class="grid grid--2">
+            <div class="field">
+              <label class="field__label" for="id_vehicle_model">Vehículo modelo</label>
+              {{ form.vehicle_model }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_vehicle_plate">Vehículo placa</label>
+              {{ form.vehicle_plate }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_moto_model">Moto modelo</label>
+              {{ form.moto_model }}
+            </div>
+            <div class="field">
+              <label class="field__label" for="id_moto_plate">Moto placa</label>
+              {{ form.moto_plate }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion" data-accordion>
+        <button class="accordion__head" type="button" data-accordion-toggle>
+          <span>ASPECTO LEGAL</span><span class="accordion__chev">▾</span>
+        </button>
+        <div class="accordion__body">
+          <div class="checks">
+            <label class="check">{{ form.accepts_liability_release }}<span>Acepto liberación de responsabilidad</span></label>
+            <label class="check">{{ form.accepts_data_treatment }}<span>Acepto tratamiento de datos</span></label>
+            <label class="check">{{ form.allows_photos }}<span>Autorizo fotografías</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="register__passwords">
+        <div class="grid grid--2">
+          <div class="field">
+            <label class="field__label" for="id_password1">Contraseña</label>
+            {{ form.password1 }}
+            {% for error in form.password1.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="field">
+            <label class="field__label" for="id_password2">Confirmar contraseña</label>
+            {{ form.password2 }}
+            {% for error in form.password2.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="register__footer">
+        <button class="btn btn--primary btn--wide" type="submit">Crear cuenta</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    window.TesaliaPage = { name: "register" };
+  </script>
+{% endblock %}
