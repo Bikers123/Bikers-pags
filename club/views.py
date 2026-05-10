@@ -393,3 +393,41 @@ def api_friend_incoming(request: HttpRequest):
             }
         )
     return JsonResponse({"ok": True, "count": total, "events": events, "now": int(timezone.now().timestamp() * 1000)})
+
+@login_required
+@require_GET
+def api_notifications_check(request: HttpRequest):
+    raw_since = (request.GET.get("since") or "").strip()
+    since_dt = None
+    if raw_since.isdigit():
+        since_ms = int(raw_since)
+        since_dt = datetime.fromtimestamp(since_ms / 1000.0, tz=timezone.utc)
+    if since_dt is None:
+        since_dt = datetime.fromtimestamp(0, tz=timezone.utc)
+
+    # Check for new friend requests
+    new_friend_requests = Friendship.objects.filter(
+        addressee=request.user, 
+        status=Friendship.Status.PENDING, 
+        created_at__gt=since_dt
+    ).exists()
+
+    # Check for new comments on user's posts
+    new_comments = PostComment.objects.filter(
+        post__author=request.user, 
+        created_at__gt=since_dt
+    ).exclude(author=request.user).exists()
+
+    # Check for new posts from other users
+    new_posts = Post.objects.filter(
+        created_at__gt=since_dt
+    ).exclude(author=request.user).exists()
+
+    has_new_events = new_friend_requests or new_comments or new_posts
+
+    return JsonResponse({
+        "ok": True, 
+        "has_new_events": has_new_events, 
+        "now": int(timezone.now().timestamp() * 1000)
+    })
+

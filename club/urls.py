@@ -18,4 +18,5 @@ urlpatterns = [
     path("api/friends/accept/", views.api_friend_accept, name="api_friend_accept"),
     path("api/friends/updates/", views.api_friend_updates, name="api_friend_updates"),
     path("api/friends/incoming/", views.api_friend_incoming, name="api_friend_incoming"),
+    path("api/notifications/check/", views.api_notifications_check, name="api_notifications_check"),
 ]
