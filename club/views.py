@@ -14,6 +14,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django import forms
 
 from .forms import LoginForm, ProfileEditForm, RegisterForm
+from .models import Friendship, Post, RiderProfile, Trip, User
 
 
 def home(request: HttpRequest):
