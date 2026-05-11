@@ -64,7 +64,7 @@
 
         <div class="authcard__divider"><span>o</span></div>
 
-        <a class="btn btn--ghost btn--wide" href="{% url 'register' %}"><span class="mi material-symbols-rounded" aria-hidden="true">person_add</span>Crear cuenta</a>
+        {% comment %} Solo el admin puede crear usuarios desde el panel de admin {% endcomment %}
       </form>
       </div>
 

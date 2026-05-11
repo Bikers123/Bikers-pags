@@ -5,7 +5,7 @@ from datetime import date, datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Prefetch, Q
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -30,6 +30,8 @@ def info_view(request: HttpRequest):
 
 def login_view(request: HttpRequest):
     if request.user.is_authenticated:
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect("admin_panel")
         return redirect("feed")
 
     form = LoginForm(request, data=request.POST or None)
@@ -49,6 +51,8 @@ def login_view(request: HttpRequest):
                 messages.error(request, "Usuario/email o contraseña incorrectos.")
             else:
                 login(request, user)
+                if user.is_staff or user.is_superuser:
+                    return redirect("admin_panel")
                 return redirect("feed")
         else:
             messages.error(request, "No se pudo iniciar sesión. Revisa usuario/email y contraseña.")
@@ -56,19 +60,111 @@ def login_view(request: HttpRequest):
     return render(request, "club/login.html", {"form": form})
 
 
+def admin_required(user):
+    return user.is_authenticated and (user.is_staff or user.is_superuser)
+
+
 def register_view(request: HttpRequest):
     if request.user.is_authenticated:
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect("admin_panel")
         return redirect("feed")
 
-    form = RegisterForm(request.POST or None)
     if request.method == "POST":
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("feed")
-        messages.error(request, "No se pudo crear la cuenta. Revisa los campos marcados.")
+        # Solo el admin puede crear usuarios desde esta vista pública
+        # (los admins usan admin_panel para crear usuarios)
+        messages.error(request, "El registro público no está disponible. Contacta a un administrador.")
+        return redirect("info")
 
-    return render(request, "club/register.html", {"form": form})
+    return redirect("login")
+
+
+@login_required
+@user_passes_test(admin_required)
+def admin_panel(request: HttpRequest):
+    users = User.objects.select_related("profile").order_by("-date_joined")
+    active_count = users.filter(is_active=True).count()
+    inactive_count = users.filter(is_active=False).count()
+    form = RegisterForm()
+    return render(request, "club/admin-page.html", {
+        "users": users,
+        "active_count": active_count,
+        "inactive_count": inactive_count,
+        "form": form,
+    })
+
+
+@login_required
+@user_passes_test(admin_required)
+@require_POST
+def admin_create_user(request: HttpRequest):
+    form = RegisterForm(request.POST or None)
+    if form.is_valid():
+        user = form.save()
+        user.is_active = True
+        is_staff = request.POST.get("is_staff") == "1"
+        user.is_staff = is_staff
+        if is_staff:
+            user.user_type = User.UserType.ADMIN
+        user.save(update_fields=["is_active", "is_staff", "user_type"])
+        messages.success(request, f"Usuario '{user.username}' creado exitosamente{' (administrador)' if is_staff else ''}.")
+        return redirect("admin_panel")
+    users = User.objects.select_related("profile").order_by("-date_joined")
+    active_count = users.filter(is_active=True).count()
+    inactive_count = users.filter(is_active=False).count()
+    messages.error(request, "No se pudo crear el usuario. Revisa los campos.")
+    return render(request, "club/admin-page.html", {
+        "users": users,
+        "active_count": active_count,
+        "inactive_count": inactive_count,
+        "form": form,
+    }, status=400)
+
+
+@login_required
+@user_passes_test(admin_required)
+@require_POST
+def admin_toggle_active(request: HttpRequest):
+    try:
+        user_id = int(request.POST.get("user_id", "0"))
+    except ValueError:
+        user_id = 0
+    if not user_id:
+        return JsonResponse({"ok": False, "error": "Usuario inválido."}, status=400)
+
+    target = get_object_or_404(User, id=user_id)
+    # No permitir que el admin se desactive a sí mismo
+    if target.id == request.user.id:
+        return JsonResponse({"ok": False, "error": "No puedes desactivarte a ti mismo."}, status=400)
+
+    target.is_active = not target.is_active
+    target.save(update_fields=["is_active"])
+
+    # Si se desactivó, forzar logout del usuario invalidando su sesión
+    if not target.is_active:
+        from django.contrib.auth import update_session_auth_hash
+        from django.contrib.sessions.models import Session
+        Session.objects.filter(session_data__contains=target.username).delete()
+
+    return JsonResponse({
+        "ok": True,
+        "is_active": target.is_active,
+        "username": target.username,
+    })
+
+
+@login_required
+@user_passes_test(admin_required)
+@require_POST
+def admin_delete_user(request: HttpRequest, user_id: int):
+    target = get_object_or_404(User, id=user_id)
+    if target.id == request.user.id:
+        messages.error(request, "No puedes eliminarte a ti mismo.")
+        return redirect("admin_panel")
+    username = target.username
+    target.delete()
+    messages.success(request, f"Usuario '{username}' eliminado exitosamente.")
+    return redirect("admin_panel")
 
 
 def logout_view(request: HttpRequest):
@@ -448,4 +544,3 @@ def api_notifications_check(request: HttpRequest):
         "has_new_events": has_new_events, 
         "now": int(timezone.now().timestamp() * 1000)
     })
-

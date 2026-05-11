@@ -1,0 +1,558 @@
+{% extends 'club/base.html' %}
+{% load static %}
+{% block body_class %}page page--admin{% endblock %}
+{% block title %}Panel de Administración | Tesalia Motoclub{% endblock %}
+
+{% block nav %}
+  <header class="topbar">
+    <div class="topbar__left">
+      <a class="logo" href="{% url 'feed' %}"><img src="{% static 'club/logo/logo.png' %}" alt="TM" /></a>
+    </div>
+    <div class="topbar__center">
+      <nav class="topbar__tabs" data-topbar-tabs>
+        <a class="topbar__tab is-active" href="{% url 'admin_panel' %}"><span class="mi material-symbols-rounded" aria-hidden="true">admin_panel_settings</span>Admin</a>
+        <a class="topbar__tab" href="{% url 'feed' %}"><span class="mi material-symbols-rounded" aria-hidden="true">home</span>Feed</a>
+        <a class="topbar__tab" href="{% url 'riders' %}"><span class="mi material-symbols-rounded" aria-hidden="true">two_wheeler</span>Riders</a>
+        <span class="topbar__indicator" data-tab-indicator aria-hidden="true"></span>
+      </nav>
+    </div>
+    <div class="topbar__right">
+      <div class="topbar__user">
+        {% with photo=request.user.photo_url %}
+          <span class="avatar{% if request.user.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+        {% endwith %}
+        <span class="topbar__name">{{ request.user.get_full_name|default:request.user.username }}</span>
+      </div>
+      <a class="btn btn--ghost btn--sm" href="{% url 'logout' %}"><span class="mi material-symbols-rounded" aria-hidden="true">logout</span>Salir</a>
+    </div>
+  </header>
+{% endblock %}
+
+{% block content %}
+  <div class="layout">
+    <aside class="sidebar sidebar--left">
+      <div class="panel">
+        <div class="panel__title">Administración</div>
+        <a class="navlink" href="{% url 'admin_panel' %}"><span class="mi material-symbols-rounded" aria-hidden="true">admin_panel_settings</span>Panel Admin</a>
+      </div>
+
+      <div class="panel">
+        <div class="panel__title">Resumen</div>
+        <div class="kv">
+          <div class="kv__row"><div class="kv__k">Total usuarios</div><div class="kv__v">{{ users|length }}</div></div>
+          <div class="kv__row"><div class="kv__k">Activos</div><div class="kv__v" style="color:var(--ok)">{{ active_count }}</div></div>
+          <div class="kv__row"><div class="kv__k">Inactivos</div><div class="kv__v" style="color:var(--warn)">{{ inactive_count }}</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="feed">
+      <!-- Crear Nuevo Usuario -->
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="panel__title">
+          <span class="mi material-symbols-rounded" aria-hidden="true">person_add</span> Crear Nuevo Usuario
+        </div>
+
+        {% if messages %}
+        <div style="margin-bottom:12px;">
+          {% for message in messages %}
+            <div class="toast toast--{{ message.tags|default:'info' }}" style="margin-bottom:6px;position:relative;">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <form class="register__form" method="post" action="{% url 'admin_create_user' %}" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors or form.errors %}
+          <div class="panel" style="margin-bottom:12px;">
+            <div class="panel__title">Errores</div>
+            {{ form.non_field_errors }}
+            {% for field in form %}
+              {% for error in field.errors %}
+                <div class="field__error" style="font-size:12px;">{{ field.label }}: {{ error }}</div>
+              {% endfor %}
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="accordion" data-accordion>
+            <button class="accordion__head" type="button" data-accordion-toggle>
+              <span>DATOS PERSONALES</span><span class="accordion__chev">▾</span>
+            </button>
+            <div class="accordion__body">
+              <div class="grid grid--2">
+                <div class="field">
+                  <label class="field__label" for="id_username">Usuario</label>
+                  <input type="text" name="username" id="id_username" required value="{{ form.data.username|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_email">Correo</label>
+                  <input type="email" name="email" id="id_email" required value="{{ form.data.email|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_first_name">Nombres</label>
+                  <input type="text" name="first_name" id="id_first_name" value="{{ form.data.first_name|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_last_name">Apellidos</label>
+                  <input type="text" name="last_name" id="id_last_name" value="{{ form.data.last_name|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_document_id">Documento</label>
+                  <input type="text" name="document_id" id="id_document_id" value="{{ form.data.document_id|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_sex">Sexo</label>
+                  <select name="sex" id="id_sex">
+                    <option value="">- Seleccione -</option>
+                    <option value="M" {% if form.data.sex == 'M' %}selected{% endif %}>Masculino</option>
+                    <option value="F" {% if form.data.sex == 'F' %}selected{% endif %}>Femenino</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_age">Edad</label>
+                  <input type="number" name="age" id="id_age" min="0" value="{{ form.data.age|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_birthdate">Fecha de nacimiento</label>
+                  <input type="date" name="birthdate" id="id_birthdate" value="{{ form.data.birthdate|default:'' }}" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion" data-accordion>
+            <button class="accordion__head" type="button" data-accordion-toggle>
+              <span>DATOS CONTACTO</span><span class="accordion__chev">▾</span>
+            </button>
+            <div class="accordion__body">
+              <div class="grid grid--2">
+                <div class="field">
+                  <label class="field__label" for="id_residence_address_line1">Dirección</label>
+                  <input type="text" name="residence_address_line1" id="id_residence_address_line1" value="{{ form.data.residence_address_line1|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_residence_address_line2">Barrio</label>
+                  <input type="text" name="residence_address_line2" id="id_residence_address_line2" value="{{ form.data.residence_address_line2|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_residence_city">Ciudad</label>
+                  <input type="text" name="residence_city" id="id_residence_city" value="{{ form.data.residence_city|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_residence_state">País/Estado</label>
+                  <input type="text" name="residence_state" id="id_residence_state" value="{{ form.data.residence_state|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_residence_postal">Código Postal</label>
+                  <input type="text" name="residence_postal" id="id_residence_postal" value="{{ form.data.residence_postal|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_residence_country">País</label>
+                  <input type="text" name="residence_country" id="id_residence_country" value="{{ form.data.residence_country|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_phone_home">Tel. habitación</label>
+                  <input type="text" name="phone_home" id="id_phone_home" value="{{ form.data.phone_home|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_phone_mobile">Tel. móvil</label>
+                  <input type="text" name="phone_mobile" id="id_phone_mobile" value="{{ form.data.phone_mobile|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_phone_work">Tel. trabajo</label>
+                  <input type="text" name="phone_work" id="id_phone_work" value="{{ form.data.phone_work|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_profile_photo_url">Foto (URL)</label>
+                  <input type="url" name="profile_photo_url" id="id_profile_photo_url" value="{{ form.data.profile_photo_url|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_contact_email">Correo alterno</label>
+                  <input type="email" name="contact_email" id="id_contact_email" value="{{ form.data.contact_email|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_occupation">Ocupación</label>
+                  <input type="text" name="occupation" id="id_occupation" value="{{ form.data.occupation|default:'' }}" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion" data-accordion>
+            <button class="accordion__head" type="button" data-accordion-toggle>
+              <span>DATOS PROFESIONALES / LABORALES</span><span class="accordion__chev">▾</span>
+            </button>
+            <div class="accordion__body">
+              <div class="grid grid--2">
+                <div class="field">
+                  <label class="field__label" for="id_birth_place_city">Lugar de nacimiento (Ciudad)</label>
+                  <input type="text" name="birth_place_city" id="id_birth_place_city" value="{{ form.data.birth_place_city|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_birth_place_country">Lugar de nacimiento (País)</label>
+                  <input type="text" name="birth_place_country" id="id_birth_place_country" value="{{ form.data.birth_place_country|default:'' }}" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion" data-accordion>
+            <button class="accordion__head" type="button" data-accordion-toggle>
+              <span>REGISTRO DE SALUD</span><span class="accordion__chev">▾</span>
+            </button>
+            <div class="accordion__body">
+              <div class="grid grid--2">
+                <div class="field">
+                  <label class="field__label" for="id_blood_type">Grupo sanguíneo</label>
+                  <select name="blood_type" id="id_blood_type">
+                    <option value="">- Seleccione -</option>
+                    <option value="A" {% if form.data.blood_type == 'A' %}selected{% endif %}>A</option>
+                    <option value="B" {% if form.data.blood_type == 'B' %}selected{% endif %}>B</option>
+                    <option value="AB" {% if form.data.blood_type == 'AB' %}selected{% endif %}>AB</option>
+                    <option value="O" {% if form.data.blood_type == 'O' %}selected{% endif %}>O</option>
+                    <option value="RH+" {% if form.data.blood_type == 'RH+' %}selected{% endif %}>RH+</option>
+                    <option value="RH-" {% if form.data.blood_type == 'RH-' %}selected{% endif %}>RH-</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_allergic">¿Es alérgico?</label>
+                  <select name="allergic" id="id_allergic">
+                    <option value="">- Seleccione -</option>
+                    <option value="1" {% if form.data.allergic == '1' %}selected{% endif %}>Sí</option>
+                    <option value="0" {% if form.data.allergic == '0' %}selected{% endif %}>No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_allergy_details">Alergias (especifique)</label>
+                  <input type="text" name="allergy_details" id="id_allergy_details" value="{{ form.data.allergy_details|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_physical_condition">¿Padecimiento físico?</label>
+                  <select name="physical_condition" id="id_physical_condition">
+                    <option value="">- Seleccione -</option>
+                    <option value="1" {% if form.data.physical_condition == '1' %}selected{% endif %}>Sí</option>
+                    <option value="0" {% if form.data.physical_condition == '0' %}selected{% endif %}>No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_physical_condition_details">Padecimiento (especifique)</label>
+                  <input type="text" name="physical_condition_details" id="id_physical_condition_details" value="{{ form.data.physical_condition_details|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_medical_treatment">¿Tratamiento médico?</label>
+                  <select name="medical_treatment" id="id_medical_treatment">
+                    <option value="">- Seleccione -</option>
+                    <option value="1" {% if form.data.medical_treatment == '1' %}selected{% endif %}>Sí</option>
+                    <option value="0" {% if form.data.medical_treatment == '0' %}selected{% endif %}>No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_medical_treatment_details">Tratamiento (especifique)</label>
+                  <input type="text" name="medical_treatment_details" id="id_medical_treatment_details" value="{{ form.data.medical_treatment_details|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_medication">¿Toma medicamentos?</label>
+                  <select name="medication" id="id_medication">
+                    <option value="">- Seleccione -</option>
+                    <option value="1" {% if form.data.medication == '1' %}selected{% endif %}>Sí</option>
+                    <option value="0" {% if form.data.medication == '0' %}selected{% endif %}>No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_medication_supply">Forma de suministro</label>
+                  <input type="text" name="medication_supply" id="id_medication_supply" value="{{ form.data.medication_supply|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_has_medical_insurance">¿Seguro médico?</label>
+                  <select name="has_medical_insurance" id="id_has_medical_insurance">
+                    <option value="">- Seleccione -</option>
+                    <option value="1" {% if form.data.has_medical_insurance == '1' %}selected{% endif %}>Sí</option>
+                    <option value="0" {% if form.data.has_medical_insurance == '0' %}selected{% endif %}>No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_medical_insurance_details">Seguro (detalle)</label>
+                  <input type="text" name="medical_insurance_details" id="id_medical_insurance_details" value="{{ form.data.medical_insurance_details|default:'' }}" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion" data-accordion>
+            <button class="accordion__head" type="button" data-accordion-toggle>
+              <span>INFORMACIÓN PARA CASOS DE EMERGENCIA</span><span class="accordion__chev">▾</span>
+            </button>
+            <div class="accordion__body">
+              <div class="grid grid--2">
+                <div class="field">
+                  <label class="field__label" for="id_emergency_primary_first_name">Contacto principal (nombres)</label>
+                  <input type="text" name="emergency_primary_first_name" id="id_emergency_primary_first_name" value="{{ form.data.emergency_primary_first_name|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_emergency_primary_last_name">Contacto principal (apellidos)</label>
+                  <input type="text" name="emergency_primary_last_name" id="id_emergency_primary_last_name" value="{{ form.data.emergency_primary_last_name|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_emergency_primary_relationship">Parentesco</label>
+                  <input type="text" name="emergency_primary_relationship" id="id_emergency_primary_relationship" value="{{ form.data.emergency_primary_relationship|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_emergency_primary_phone">Teléfono</label>
+                  <input type="text" name="emergency_primary_phone" id="id_emergency_primary_phone" value="{{ form.data.emergency_primary_phone|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_emergency_secondary_first_name">Contacto alterno (nombres)</label>
+                  <input type="text" name="emergency_secondary_first_name" id="id_emergency_secondary_first_name" value="{{ form.data.emergency_secondary_first_name|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_emergency_secondary_last_name">Contacto alterno (apellidos)</label>
+                  <input type="text" name="emergency_secondary_last_name" id="id_emergency_secondary_last_name" value="{{ form.data.emergency_secondary_last_name|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_emergency_secondary_phone">Teléfono</label>
+                  <input type="text" name="emergency_secondary_phone" id="id_emergency_secondary_phone" value="{{ form.data.emergency_secondary_phone|default:'' }}" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion" data-accordion>
+            <button class="accordion__head" type="button" data-accordion-toggle>
+              <span>MOTO O VEHÍCULO</span><span class="accordion__chev">▾</span>
+            </button>
+            <div class="accordion__body">
+              <div class="grid grid--2">
+                <div class="field">
+                  <label class="field__label" for="id_vehicle_model">Vehículo modelo</label>
+                  <input type="text" name="vehicle_model" id="id_vehicle_model" value="{{ form.data.vehicle_model|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_vehicle_plate">Vehículo placa</label>
+                  <input type="text" name="vehicle_plate" id="id_vehicle_plate" value="{{ form.data.vehicle_plate|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_moto_model">Moto modelo</label>
+                  <input type="text" name="moto_model" id="id_moto_model" value="{{ form.data.moto_model|default:'' }}" />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="id_moto_plate">Moto placa</label>
+                  <input type="text" name="moto_plate" id="id_moto_plate" value="{{ form.data.moto_plate|default:'' }}" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion" data-accordion>
+            <button class="accordion__head" type="button" data-accordion-toggle>
+              <span>ASPECTO LEGAL</span><span class="accordion__chev">▾</span>
+            </button>
+            <div class="accordion__body">
+              <div class="checks">
+                <label class="check">
+                  <input type="checkbox" name="accepts_liability_release" value="1" />
+                  <span>Acepto liberación de responsabilidad</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="accepts_data_treatment" value="1" />
+                  <span>Acepto tratamiento de datos</span>
+                </label>
+                <label class="check">
+                  <input type="checkbox" name="allows_photos" value="1" />
+                  <span>Autorizo fotografías</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="register__passwords">
+            <div class="grid grid--2">
+              <div class="field">
+                <label class="field__label" for="id_password1">Contraseña</label>
+                <input type="password" name="password1" id="id_password1" required placeholder="Contraseña" />
+                {% for error in form.password1.errors %}<div class="field__error" style="font-size:12px;">{{ error }}</div>{% endfor %}
+              </div>
+              <div class="field">
+                <label class="field__label" for="id_password2">Confirmar contraseña</label>
+                <input type="password" name="password2" id="id_password2" required placeholder="Confirmar contraseña" />
+                {% for error in form.password2.errors %}<div class="field__error" style="font-size:12px;">{{ error }}</div>{% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;">
+            <button class="btn btn--primary btn--wide" type="submit">
+              <span class="mi material-symbols-rounded" aria-hidden="true">person_add</span> Crear Usuario
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Lista de Usuarios -->
+      <div class="panel">
+        <div class="panel__title">
+          <span class="mi material-symbols-rounded" aria-hidden="true">people</span> Usuarios Registrados
+        </div>
+        <div class="riders__grid" style="grid-template-columns:repeat(2,1fr);">
+          {% for u in users %}
+          <div class="usercard" data-user-card data-user-id="{{ u.id }}" style="position:relative;">
+            {% if u.profile.cover_photo_url %}
+              <div class="usercard__bg" style="background-image:url('{{ u.profile.cover_photo_url }}')" aria-hidden="true"></div>
+            {% endif %}
+            <div class="usercard__top" style="flex-direction:row;align-items:center;gap:10px;">
+              {% with photo=u.photo_url %}
+                <span class="avatar avatar--lg{% if u.is_online and u.is_active %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+              {% endwith %}
+              <div style="flex:1;min-width:0;">
+                <div class="usercard__name">{{ u.get_full_name|default:u.username }}</div>
+                <div class="usercard__handle">@{{ u.username }}</div>
+              </div>
+            </div>
+            <div class="usercard__bottom" style="flex-direction:column;gap:8px;align-items:flex-start;">
+              <div style="display:flex;gap:6px;align-items:center;">
+                {% if u.is_active %}
+                  <span class="chip chip--muted" style="font-size:11px;"><span class="mi" style="font-size:12px;color:#22c55e;">check_circle</span> Activo</span>
+                {% else %}
+                  <span class="chip chip--warn" style="font-size:11px;"><span class="mi" style="font-size:12px;">block</span> Inactivo</span>
+                {% endif %}
+                <span style="font-size:11px;color:var(--muted);margin-left:4px;">{{ u.date_joined|date:"d M Y" }}</span>
+              </div>
+              <div style="display:flex;gap:6px;width:100%;">
+                {% if u.id != request.user.id %}
+                  <button class="btn btn--{% if u.is_active %}ghost{% else %}primary{% endif %} btn--sm"
+                          type="button"
+                          data-toggle-active
+                          data-user-id="{{ u.id }}"
+                          data-current-state="{{ u.is_active|yesno:'true,false' }}">
+                    <span class="mi material-symbols-rounded" aria-hidden="true">{% if u.is_active %}block{% else %}check_circle{% endif %}</span>
+                    {% if u.is_active %}Desactivar{% else %}Activar{% endif %}
+                  </button>
+                  <a class="btn btn--ghost btn--sm" href="{% url 'rider_detail' u.username %}" style="flex:1;text-align:center;">
+                    <span class="mi material-symbols-rounded" aria-hidden="true">visibility</span> Ver perfil
+                  </a>
+                  <form method="post" action="{% url 'admin_delete_user' u.id %}" style="flex:0 0 auto;" onsubmit="return confirm('¿Eliminar usuario {{ u.username }}? Esta acción no se puede deshacer.')">
+                    {% csrf_token %}
+                    <button class="btn btn--danger btn--sm" type="submit" title="Eliminar usuario">
+                      <span class="mi material-symbols-rounded" aria-hidden="true">delete</span>
+                    </button>
+                  </form>
+                {% else %}
+                  <span class="muted" style="font-size:12px;">(Tú)</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="muted" style="grid-column:1/-1;text-align:center;">No hay usuarios registrados.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Modal de confirmación -->
+      <div class="modal-overlay" id="adminToggleModal" hidden>
+        <div class="modal">
+          <div class="modal__icon" id="adminToggleModalIcon">
+            <span class="mi material-symbols-rounded" id="adminToggleModalIconInner">block</span>
+          </div>
+          <div class="modal__title" id="adminToggleModalTitle">Desactivar usuario</div>
+          <div class="modal__text" id="adminToggleModalText">¿Estás seguro de que deseas desactivar este usuario?</div>
+          <div class="modal__actions">
+            <button class="btn btn--ghost btn--sm" type="button" data-modal-cancel>Cancelar</button>
+            <button class="btn btn--danger btn--sm" id="adminToggleModalConfirm" type="button">Confirmar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    window.TesaliaPage = { name: "admin" };
+
+    /* === ADMIN: TOGGLE USER ACTIVE/INACTIVE === */
+    !function() {
+      var pending = null;
+
+      document.addEventListener("click", function(e) {
+        var btn = e.target.closest("[data-toggle-active]");
+        if (!btn) return;
+        e.stopImmediatePropagation();
+
+        var uid  = btn.getAttribute("data-user-id");
+        var cur  = btn.getAttribute("data-current-state") === "true";
+        var card = btn.closest("[data-user-card]");
+        var name = card ? (card.querySelector(".usercard__name") || {}).textContent : "usuario";
+
+        var modal  = document.getElementById("adminToggleModal");
+        var title  = document.getElementById("adminToggleModalTitle");
+        var text   = document.getElementById("adminToggleModalText");
+        var icon   = document.getElementById("adminToggleModalIcon");
+        var iconIn = document.getElementById("adminToggleModalIconInner");
+        var okBtn  = document.getElementById("adminToggleModalConfirm");
+
+        if (cur) {
+          title.textContent = "Desactivar usuario";
+          text.textContent  = "¿Desactivar a @" + name + "? Ya no podrá acceder al sistema.";
+          icon.style.background = "rgba(239,68,68,.12)";
+          icon.style.borderColor = "rgba(239,68,68,.25)";
+          iconIn.textContent = "block";
+          okBtn.className = "btn btn--danger btn--sm";
+          okBtn.innerHTML = '<span class="mi material-symbols-rounded">block</span> Desactivar';
+        } else {
+          title.textContent = "Activar usuario";
+          text.textContent  = "¿Activar a @" + name + "? Podrá acceder al sistema.";
+          icon.style.background = "rgba(34,197,94,.12)";
+          icon.style.borderColor = "rgba(34,197,94,.25)";
+          iconIn.textContent = "check_circle";
+          okBtn.className = "btn btn--primary btn--sm";
+          okBtn.innerHTML = '<span class="mi material-symbols-rounded">check_circle</span> Activar';
+        }
+
+        pending = { uid: uid, wasActive: cur, btn: btn };
+        modal.hidden = false;
+      });
+
+      /* confirm click */
+      document.getElementById("adminToggleModalConfirm").addEventListener("click", function() {
+        if (!pending) return;
+        var modal = document.getElementById("adminToggleModal");
+
+        fetch("{% url 'admin_toggle_active' %}", {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: "user_id=" + encodeURIComponent(pending.uid)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          modal.hidden = true;
+          if (!d.ok) { alert(d.error || "Error."); return; }
+          location.reload();
+        })
+        .catch(function() {
+          modal.hidden = true;
+          alert("Error de conexión.");
+        });
+        pending = null;
+      });
+
+      /* cancel */
+      document.addEventListener("click", function(e) {
+        if (e.target.closest("[data-modal-cancel]") ||
+            (e.target.classList.contains("modal-overlay") && e.target.id === "adminToggleModal")) {
+          document.getElementById("adminToggleModal").hidden = true;
+          pending = null;
+        }
+      });
+
+      function getCSRFToken() {
+        var m = document.cookie.match(/(?:^|;\\s*)csrftoken=([^;]+)/);
+        return m ? m[1] : "";
+      }
+    }();
+  </script>
+{% endblock %}
