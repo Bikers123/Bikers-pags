@@ -18,7 +18,14 @@ from .models import Friendship, Post, PostComment, RiderProfile, Trip, User
 
 
 def home(request: HttpRequest):
-    return redirect("login")
+    return redirect("info")
+
+
+def info_view(request: HttpRequest):
+    return render(request, "club/info.html", {
+        "club_name": "Tesalia Motoclub",
+        "club_tagline": "Pasión sobre dos ruedas",
+    })
 
 
 def login_view(request: HttpRequest):
@@ -66,7 +73,7 @@ def register_view(request: HttpRequest):
 
 def logout_view(request: HttpRequest):
     logout(request)
-    return redirect("home")
+    return redirect("info")
 
 
 def _friends_queryset(user: User):
@@ -334,7 +341,7 @@ def api_friend_updates(request: HttpRequest):
     since_dt = None
     if raw_since.isdigit():
         since_ms = int(raw_since)
-        since_dt = datetime.fromtimestamp(since_ms / 1000.0, tz=timezone.utc)
+        since_dt = datetime.fromtimestamp(since_ms / 1000.0, tz=datetime.timezone.utc)
     if since_dt is None:
         since_dt = datetime.fromtimestamp(0, tz=timezone.utc)
 
@@ -369,7 +376,7 @@ def api_friend_incoming(request: HttpRequest):
     since_dt = None
     if raw_since.isdigit():
         since_ms = int(raw_since)
-        since_dt = datetime.fromtimestamp(since_ms / 1000.0, tz=timezone.utc)
+        since_dt = datetime.fromtimestamp(since_ms / 1000.0, tz=datetime.timezone.utc)
     if since_dt is None:
         since_dt = datetime.fromtimestamp(0, tz=timezone.utc)
 
@@ -401,7 +408,7 @@ def api_notifications_check(request: HttpRequest):
     since_dt = None
     if raw_since.isdigit():
         since_ms = int(raw_since)
-        since_dt = datetime.fromtimestamp(since_ms / 1000.0, tz=timezone.utc)
+        since_dt = datetime.fromtimestamp(since_ms / 1000.0, tz=datetime.timezone.utc)
     if since_dt is None:
         since_dt = datetime.fromtimestamp(0, tz=timezone.utc)
 
