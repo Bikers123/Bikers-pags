@@ -1,4 +1,5 @@
 {% extends 'club/base.html' %}
+{% load static %}
 {% block body_class %}page page--auth{% endblock %}
 {% block title %}Registro | Tesalia Motoclub{% endblock %}
 
@@ -6,7 +7,7 @@
   <section class="register">
     <div class="register__header">
       <div class="brand brand--compact">
-        <img src="/media/profiles/logo/logo32.png" alt="TM" class="brand__mark-img" />
+        <img src="{% static 'club/logo/logo32.png' %}" alt="TM" class="brand__mark-img" />
         <div class="brand__text">
           <div class="brand__title">Tesalia Motoclub</div>
           <div class="brand__tagline">Pre-inscripción / Registro</div>

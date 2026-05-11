@@ -1,4 +1,5 @@
 {% extends 'club/base.html' %}
+{% load static %}
 {% block body_class %}page page--info{% endblock %}
 {% block title %}Tesalia Motoclub{% endblock %}
 
@@ -14,7 +15,7 @@
         <div class="infopage__overlay"></div>
         <div class="infopage__content">
           <div class="infopage__logo">
-            <img src="/media/profiles/logo/logo32.png" alt="Tesalia Motoclub Logo" />
+            <img src="{% static 'club/logo/logo32.png' %}" alt="Tesalia Motoclub Logo" />
           </div>
           <div class="brand">
             
