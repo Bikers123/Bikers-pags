@@ -208,6 +208,17 @@ def post_create(request: HttpRequest):
 
 @login_required
 @require_POST
+def post_delete(request: HttpRequest, post_id: int):
+    post = get_object_or_404(Post, id=post_id)
+    if post.author_id != request.user.id:
+        return JsonResponse({"ok": False, "error": "No autorizado."}, status=403)
+    post.delete()
+    messages.success(request, "Publicación eliminada.")
+    return redirect("feed")
+
+
+@login_required
+@require_POST
 def post_comment(request: HttpRequest, post_id: int):
     post = get_object_or_404(Post, id=post_id)
     form = PostCommentForm(request.POST or None, user=request.user, post=post)

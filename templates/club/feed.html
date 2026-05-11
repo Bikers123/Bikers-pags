@@ -122,6 +122,18 @@
                   <div class="post__location"><span class="mi material-symbols-rounded" aria-hidden="true">location_on</span> {{ post.location }}</div>
                 {% endif %}
               </div>
+              {% if post.author.id == request.user.id %}
+                <div class="post__menu">
+                  <button class="post__menu-btn" type="button" aria-label="Opciones de publicación" data-post-menu-toggle>
+                    <span class="mi material-symbols-rounded">more_vert</span>
+                  </button>
+                  <div class="post__dropdown" data-post-dropdown hidden>
+                    <button class="post__dropdown-item post__dropdown-item--danger" type="button" data-post-delete-trigger="{{ post.id }}">
+                      <span class="mi material-symbols-rounded">delete</span>Eliminar publicación
+                    </button>
+                  </div>
+                </div>
+              {% endif %}
             </header>
             {% if post.text %}
               <div class="post__text">{{ post.text }}</div>
@@ -278,7 +290,73 @@
 {% endblock %}
 
 {% block scripts %}
+  <!-- Delete confirmation modal -->
+  <div class="modal-overlay" id="deleteModal" hidden>
+    <div class="modal">
+      <div class="modal__icon">
+        <span class="mi material-symbols-rounded">warning</span>
+      </div>
+      <div class="modal__title">¿Eliminar publicación?</div>
+      <div class="modal__text">Esta acción no se puede deshacer. La publicación y sus comentarios se eliminarán permanentemente.</div>
+      <div class="modal__actions">
+        <button class="btn btn--ghost btn--sm" type="button" data-modal-cancel>Cancelar</button>
+        <form id="deleteForm" method="post" action="">
+          {% csrf_token %}
+          <button class="btn btn--danger btn--sm" type="submit">
+            <span class="mi material-symbols-rounded">delete</span>Eliminar
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script>
     window.TesaliaPage = { name: "feed" };
+
+    /* Post menu toggle */
+    document.addEventListener("click", function(e) {
+      var toggleBtn = e.target.closest("[data-post-menu-toggle]");
+      if (toggleBtn) {
+        e.stopPropagation();
+        var dropdown = toggleBtn.parentElement.querySelector("[data-post-dropdown]");
+        var wasHidden = dropdown.hidden;
+        // Close all dropdowns first
+        document.querySelectorAll("[data-post-dropdown]").forEach(function(d) { d.hidden = true; });
+        dropdown.hidden = !wasHidden;
+        return;
+      }
+
+      // Close dropdowns on outside click
+      if (!e.target.closest("[data-post-dropdown]")) {
+        document.querySelectorAll("[data-post-dropdown]").forEach(function(d) { d.hidden = true; });
+      }
+    });
+
+    /* Delete trigger — open modal */
+    document.addEventListener("click", function(e) {
+      var trigger = e.target.closest("[data-post-delete-trigger]");
+      if (trigger) {
+        var postId = trigger.getAttribute("data-post-delete-trigger");
+        var modal = document.getElementById("deleteModal");
+        var form = document.getElementById("deleteForm");
+        form.action = "/posts/" + postId + "/delete/";
+        modal.hidden = false;
+        document.querySelectorAll("[data-post-dropdown]").forEach(function(d) { d.hidden = true; });
+      }
+    });
+
+    /* Modal cancel */
+    document.addEventListener("click", function(e) {
+      if (e.target.closest("[data-modal-cancel]") || (e.target.classList.contains("modal-overlay") && e.target.id === "deleteModal")) {
+        document.getElementById("deleteModal").hidden = true;
+      }
+    });
+
+    /* Close modal on Escape */
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") {
+        document.getElementById("deleteModal").hidden = true;
+      }
+    });
   </script>
 {% endblock %}
