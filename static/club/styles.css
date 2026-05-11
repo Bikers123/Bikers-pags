@@ -455,12 +455,13 @@ img{max-width:100%;display:block}
   height:100vh;
   background-size:cover;
   background-position:center;
-  position:relative;
   display:flex;
   align-items:center;
   opacity:0;
   transform:scale(1.02);
   transition:opacity .8s ease, transform 1.2s ease;
+  will-change:opacity, transform;
+  backface-visibility:hidden;
   pointer-events:none;
 }
 .infopage__slide.is-active{
