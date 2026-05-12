@@ -22,9 +22,17 @@ def home(request: HttpRequest):
 
 
 def info_view(request: HttpRequest):
+    carousel_posts = list(
+        Post.objects.select_related("author", "author__profile")
+        .prefetch_related("images")
+        .filter(location__gt="", text__gt="", images__isnull=False)
+        .order_by("-created_at")
+        .distinct()[:5]
+    )
     return render(request, "club/info.html", {
         "club_name": "Tesalia Motoclub",
         "club_tagline": "Pasión sobre dos ruedas",
+        "carousel_posts": carousel_posts,
     })
 
 

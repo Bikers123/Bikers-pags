@@ -562,6 +562,34 @@ img{max-width:100%;display:block}
   width:auto;
 }
 
+.infopage__postmeta{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin:0 0 18px;
+}
+.infopage__postauthor{
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:.2px;
+  color:rgba(255,255,255,.92);
+}
+.infopage__postlocation{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:14px;
+  color:rgba(255,255,255,.82);
+}
+.infopage__postlocation .mi{
+  font-size:18px;
+  color:var(--accent);
+}
+.infopage__posttime{
+  font-size:13px;
+  color:rgba(255,255,255,.65);
+}
+
 @media (max-width: 900px){
   .infopage__heading{
     font-size:32px;

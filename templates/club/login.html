@@ -16,7 +16,7 @@
         </a>
         <nav class="authnav__tabs" aria-label="Acceso">
           <a class="authnav__tab is-active" href="{% url 'login' %}">Iniciar sesión</a>
-          <a class="authnav__tab" href="{% url 'register' %}">Crear cuenta</a>
+          <!--<a class="authnav__tab" href="{% url 'register' %}">Crear cuenta</a>-->
         </nav>
       </div>
     </header>
@@ -62,13 +62,13 @@
 
         <button class="btn btn--primary btn--wide" type="submit"><span class="mi material-symbols-rounded" aria-hidden="true">login</span>Entrar</button>
 
-        <div class="authcard__divider"><span>o</span></div>
+        <!--<div class="authcard__divider"><span>o</span></div>-->
 
         {% comment %} Solo el admin puede crear usuarios desde el panel de admin {% endcomment %}
       </form>
       </div>
 
-      <section class="authpreview" aria-label="Vista previa del club">
+      <!--<section class="authpreview" aria-label="Vista previa del club">
         <div class="authpreview__head">
           <div class="authpreview__title">Vista previa del club</div>
           <div class="authpreview__sub">Demo: aquí verás viajes y publicaciones cuando entres.</div>
@@ -129,7 +129,7 @@
         </div>
       </section>
     </div>
-  </section>
+  </section>-->
 {% endblock %}
 
 {% block scripts %}

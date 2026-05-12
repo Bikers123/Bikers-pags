@@ -18,7 +18,6 @@
             <img src="{% static 'club/logo/logo32.png' %}" alt="Tesalia Motoclub Logo" />
           </div>
           <div class="brand">
-            
             <div class="brand__text">
               <h2 class="brand__title">{{ club_name }}</h2>
               <p class="brand__tagline">{{ club_tagline }}</p>
@@ -28,7 +27,6 @@
           <p class="infopage__text">Una comunidad apasionada por las dos ruedas, los viajes y la camaradería sobre la carretera.</p>
           <div class="infopage__actions">
             <a class="btn btn--primary" href="{% url 'login' %}">Iniciar sesión</a>
-            <a class="btn btn--ghost" href="{% url 'register' %}">Registrarme</a>
           </div>
         </div>
       </div>
@@ -37,15 +35,39 @@
         <div class="infopage__content">
           <h3 class="infopage__heading">Viajes Organizados</h3>
           <p class="infopage__text">Salidas semanales, rutas personalizadas y eventos especiales. ¡Únete a nuestra próxima rodada!</p>
-          <a class="btn btn--primary" href="{% url 'login' %}">Ver viajes</a>
+          <!--<a class="btn btn--primary" href="{% url 'login' %}">Ver viajes</a>-->
         </div>
       </div>
+
+      {% if carousel_posts %}
+        {% for post in carousel_posts %}
+          {% for img in post.images.all|slice:":1" %}
+            <div class="infopage__slide" style="background-image:url('{{ img.url }}')">
+              <div class="infopage__overlay"></div>
+              <div class="infopage__content">
+                <div class="infopage__postmeta">
+                  <div class="infopage__postauthor">Última publicación — {{ post.author.get_full_name|default:post.author.username }}</div>
+                  <div class="infopage__postlocation"><span class="material-symbols-rounded mi" aria-hidden="true">location_on</span>{{ post.location }}</div>
+                  <div class="infopage__posttime">{{ post.created_at|date:"d/m/Y H:i" }}</div>
+                </div>
+                <h3 class="infopage__heading">{{ post.location|truncatechars:60 }}</h3>
+                <p class="infopage__text">{{ post.text|truncatechars:180 }}</p>
+                <div class="infopage__actions">
+                  <a class="btn btn--primary" href="{% url 'login' %}">Iniciar sesión</a>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% endfor %}
+      {% endif %}
+
       <div class="infopage__slide" style="background-image:url('{% static "club/carousel/tercera-imagen.jpeg" %}')">
         <div class="infopage__overlay"></div>
         <div class="infopage__content">
-          <h3 class="infopage__heading">Conecta con Riders</h3>
-          <p class="infopage__text">Busca compañeros de ruta y mantente conectado con todos los miembros.</p>
-          <a class="btn btn--primary" href="{% url 'login' %}">Conectar</a>
+          <h3 class="infopage__heading">Contacto del club</h3>
+          <p class="infopage__text">Dirección del club Rocky Point - Obregón Coahuila 642 Sur. CP 85000.</p>
+          <p class="infopage__text">Inicia sesión para ver riders y contactos.</p>
+          <!--<a class="btn btn--primary" href="{% url 'login' %}">Conectar</a>-->
         </div>
       </div>
     </div>
