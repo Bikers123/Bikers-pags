@@ -9,6 +9,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core.files.storage import default_storage
+from django.db import transaction
 
 from .models import EmergencyContact, Post, PostComment, PostImage, RiderProfile, User
 
@@ -451,8 +452,7 @@ class PostCreateForm(forms.Form):
         location = (self.cleaned_data.get("location") or "").strip()
         image_file = self.cleaned_data.get("image_file")
 
-        post = Post.objects.create(author=self.user, text=text, location=location)
-
+        image_url = ""
         if image_file:
             if getattr(settings, "USE_LOCAL_MEDIA", False):
                 original_name = getattr(image_file, "name", "") or "image"
@@ -463,12 +463,14 @@ class PostCreateForm(forms.Form):
                 if ext not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
                     ext = ".jpg"
                 saved_name = default_storage.save(f"posts/{uuid.uuid4().hex}{ext}", image_file)
-                url = self.request.build_absolute_uri(settings.MEDIA_URL + saved_name)
-                PostImage.objects.create(post=post, url=url)
+                image_url = self.request.build_absolute_uri(settings.MEDIA_URL + saved_name)
             else:
-                url = ProfileEditForm._upload_to_supabase_storage(image_file, kind="posts")
-                PostImage.objects.create(post=post, url=url)
+                image_url = ProfileEditForm._upload_to_supabase_storage(image_file, kind="posts")
 
+        with transaction.atomic():
+            post = Post.objects.create(author=self.user, text=text, location=location)
+            if image_url:
+                PostImage.objects.create(post=post, url=image_url)
         return post
 
 
