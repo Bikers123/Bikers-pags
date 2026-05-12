@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 from django import forms
 
-from .forms import LoginForm, PostCommentForm, PostCreateForm, ProfileEditForm, RegisterForm
+from .forms import LoginForm, PostCommentForm, PostCreateForm, PostEditForm, ProfileEditForm, RegisterForm
 from .models import Friendship, Post, PostComment, RiderProfile, Trip, User
 
 
@@ -93,11 +93,17 @@ def admin_panel(request: HttpRequest):
     users = User.objects.select_related("profile").order_by("-date_joined")
     active_count = users.filter(is_active=True).count()
     inactive_count = users.filter(is_active=False).count()
+    posts = (
+        Post.objects.select_related("author", "author__profile")
+        .prefetch_related("images")
+        .order_by("-created_at")[:25]
+    )
     form = RegisterForm()
     return render(request, "club/admin-page.html", {
         "users": users,
         "active_count": active_count,
         "inactive_count": inactive_count,
+        "posts": posts,
         "form": form,
     })
 
@@ -172,6 +178,16 @@ def admin_delete_user(request: HttpRequest, user_id: int):
     username = target.username
     target.delete()
     messages.success(request, f"Usuario '{username}' eliminado exitosamente.")
+    return redirect("admin_panel")
+
+
+@login_required
+@user_passes_test(admin_required)
+@require_POST
+def admin_delete_post(request: HttpRequest, post_id: int):
+    post = get_object_or_404(Post, id=post_id)
+    post.delete()
+    messages.success(request, "Publicación eliminada.")
     return redirect("admin_panel")
 
 
@@ -307,6 +323,31 @@ def post_create(request: HttpRequest):
             messages.success(request, "Publicación creada.")
     else:
         messages.error(request, "No se pudo publicar. Revisa el texto o la imagen.")
+    return redirect("feed")
+
+
+@login_required
+@require_POST
+def post_edit(request: HttpRequest, post_id: int):
+    post = get_object_or_404(Post, id=post_id)
+    if post.author_id != request.user.id:
+        return JsonResponse({"ok": False, "error": "No autorizado."}, status=403)
+
+    form = PostEditForm(request.POST or None, request.FILES or None, user=request.user, request=request, post=post)
+    if form.is_valid():
+        try:
+            form.save()
+        except forms.ValidationError as e:
+            msg = ""
+            if hasattr(e, "messages") and e.messages:
+                msg = e.messages[0]
+            messages.error(request, msg or "No se pudo actualizar. Reintenta.")
+        except Exception:
+            messages.error(request, "No se pudo actualizar. Reintenta.")
+        else:
+            messages.success(request, "Publicación actualizada.")
+    else:
+        messages.error(request, "No se pudo actualizar. Revisa los campos.")
     return redirect("feed")
 
 

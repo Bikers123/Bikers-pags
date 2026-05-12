@@ -9,6 +9,7 @@ urlpatterns = [
     path("auth/logout/", views.logout_view, name="logout"),
     path("feed/", views.feed, name="feed"),
     path("posts/create/", views.post_create, name="post_create"),
+    path("posts/<int:post_id>/edit/", views.post_edit, name="post_edit"),
     path("posts/<int:post_id>/delete/", views.post_delete, name="post_delete"),
     path("posts/<int:post_id>/comment/", views.post_comment, name="post_comment"),
     path("riders/", views.riders, name="riders"),
@@ -19,6 +20,7 @@ urlpatterns = [
     path("panel/create-user/", views.admin_create_user, name="admin_create_user"),
     path("panel/toggle-active/", views.admin_toggle_active, name="admin_toggle_active"),
     path("panel/delete-user/<int:user_id>/", views.admin_delete_user, name="admin_delete_user"),
+    path("panel/delete-post/<int:post_id>/", views.admin_delete_post, name="admin_delete_post"),
     # API
     path("api/search/", views.api_search, name="api_search"),
     path("api/friends/request/", views.api_friend_request, name="api_friend_request"),

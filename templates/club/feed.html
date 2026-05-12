@@ -24,7 +24,12 @@
         {% with photo=request.user.photo_url %}
           <span class="avatar{% if request.user.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
         {% endwith %}
-        <span class="topbar__name">{{ request.user.get_full_name|default:request.user.username }}</span>
+        <span class="topbar__name">
+          {{ request.user.get_full_name|default:request.user.username }}
+          {% if request.user.is_staff or request.user.is_superuser %}
+            <span class="verified-badge" title="Cuenta verificada"><span class="mi material-symbols-rounded" aria-hidden="true">verified</span></span>
+          {% endif %}
+        </span>
       </div>
       {% if request.user.is_staff or request.user.is_superuser %}
       <a class="btn btn--ghost btn--sm" href="{% url 'admin_panel' %}"><span class="mi material-symbols-rounded" aria-hidden="true">admin_panel_settings</span>Admin</a>
@@ -119,7 +124,12 @@
                 <span class="avatar{% if post.author.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
               {% endwith %}
               <div class="post__meta">
-                <div class="post__author">{{ post.author.get_full_name|default:post.author.username }}</div>
+                <div class="post__author">
+                  {{ post.author.get_full_name|default:post.author.username }}
+                  {% if post.author.is_staff or post.author.is_superuser %}
+                    <span class="verified-badge" title="Cuenta verificada"><span class="mi material-symbols-rounded" aria-hidden="true">verified</span></span>
+                  {% endif %}
+                </div>
                 <div class="post__time">{{ post.created_at }}</div>
                 {% if post.location %}
                   <div class="post__location"><span class="mi material-symbols-rounded" aria-hidden="true">location_on</span> {{ post.location }}</div>
@@ -131,6 +141,15 @@
                     <span class="mi material-symbols-rounded">more_vert</span>
                   </button>
                   <div class="post__dropdown" data-post-dropdown hidden>
+                    <button
+                      class="post__dropdown-item"
+                      type="button"
+                      data-post-edit-trigger="{{ post.id }}"
+                      data-post-edit-text="{{ post.text|default:''|escapejs }}"
+                      data-post-edit-location="{{ post.location|default:''|escapejs }}"
+                    >
+                      <span class="mi material-symbols-rounded">edit</span>Editar publicación
+                    </button>
                     <button class="post__dropdown-item post__dropdown-item--danger" type="button" data-post-delete-trigger="{{ post.id }}">
                       <span class="mi material-symbols-rounded">delete</span>Eliminar publicación
                     </button>
@@ -293,6 +312,28 @@
 {% endblock %}
 
 {% block scripts %}
+  <div class="modal-overlay" id="editModal" hidden>
+    <div class="modal">
+      <div class="modal__icon">
+        <span class="mi material-symbols-rounded">edit</span>
+      </div>
+      <div class="modal__title">Editar publicación</div>
+      <div class="modal__text">Cambia la descripción, la ubicación o reemplaza la foto.</div>
+      <form id="editForm" method="post" action="" enctype="multipart/form-data">
+        {% csrf_token %}
+        <textarea class="composer__input" name="text" rows="3" placeholder="Editar descripción..." id="editText"></textarea>
+        <input class="composer__location" type="text" name="location" placeholder="Editar ubicación..." maxlength="255" id="editLocation" />
+        <input class="modal__file" type="file" name="image_file" accept="image/*" id="editImage" />
+        <div class="modal__actions">
+          <button class="btn btn--ghost btn--sm" type="button" data-modal-cancel>Cancelar</button>
+          <button class="btn btn--primary btn--sm" type="submit">
+            <span class="mi material-symbols-rounded">save</span>Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Delete confirmation modal -->
   <div class="modal-overlay" id="deleteModal" hidden>
     <div class="modal">
@@ -348,10 +389,35 @@
       }
     });
 
+    /* Edit trigger — open modal */
+    document.addEventListener("click", function(e) {
+      var trigger = e.target.closest("[data-post-edit-trigger]");
+      if (trigger) {
+        var postId = trigger.getAttribute("data-post-edit-trigger");
+        var modal = document.getElementById("editModal");
+        var form = document.getElementById("editForm");
+        var textEl = document.getElementById("editText");
+        var locEl = document.getElementById("editLocation");
+        var imgEl = document.getElementById("editImage");
+        if (form) form.action = "/posts/" + postId + "/edit/";
+        if (textEl) textEl.value = trigger.getAttribute("data-post-edit-text") || "";
+        if (locEl) locEl.value = trigger.getAttribute("data-post-edit-location") || "";
+        if (imgEl) imgEl.value = "";
+        modal.hidden = false;
+        document.querySelectorAll("[data-post-dropdown]").forEach(function(d) { d.hidden = true; });
+      }
+    });
+
     /* Modal cancel */
     document.addEventListener("click", function(e) {
-      if (e.target.closest("[data-modal-cancel]") || (e.target.classList.contains("modal-overlay") && e.target.id === "deleteModal")) {
-        document.getElementById("deleteModal").hidden = true;
+      var cancel = e.target.closest("[data-modal-cancel]");
+      if (cancel) {
+        var overlay = cancel.closest(".modal-overlay");
+        if (overlay) overlay.hidden = true;
+        return;
+      }
+      if (e.target.classList.contains("modal-overlay")) {
+        e.target.hidden = true;
       }
     });
 
@@ -359,6 +425,7 @@
     document.addEventListener("keydown", function(e) {
       if (e.key === "Escape") {
         document.getElementById("deleteModal").hidden = true;
+        document.getElementById("editModal").hidden = true;
       }
     });
   </script>

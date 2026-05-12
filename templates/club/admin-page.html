@@ -21,7 +21,12 @@
         {% with photo=request.user.photo_url %}
           <span class="avatar{% if request.user.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
         {% endwith %}
-        <span class="topbar__name">{{ request.user.get_full_name|default:request.user.username }}</span>
+        <span class="topbar__name">
+          {{ request.user.get_full_name|default:request.user.username }}
+          {% if request.user.is_staff or request.user.is_superuser %}
+            <span class="verified-badge" title="Cuenta verificada"><span class="mi material-symbols-rounded" aria-hidden="true">verified</span></span>
+          {% endif %}
+        </span>
       </div>
       <a class="btn btn--ghost btn--sm" href="{% url 'logout' %}"><span class="mi material-symbols-rounded" aria-hidden="true">logout</span>Salir</a>
     </div>
@@ -447,6 +452,55 @@
           <div class="muted" style="grid-column:1/-1;text-align:center;">No hay usuarios registrados.</div>
           {% endfor %}
         </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel__title">
+          <span class="mi material-symbols-rounded" aria-hidden="true">photo_library</span> Publicaciones
+        </div>
+        {% if posts %}
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            {% for post in posts %}
+              <article class="post" id="admin-post-{{ post.id }}">
+                <header class="post__head">
+                  {% with photo=post.author.photo_url %}
+                    <span class="avatar{% if post.author.is_online %} avatar--online{% endif %}"{% if photo %} style="background-image:url('{{ photo }}')"{% endif %}></span>
+                  {% endwith %}
+                  <div class="post__meta">
+                    <div class="post__author">
+                      {{ post.author.get_full_name|default:post.author.username }}
+                      {% if post.author.is_staff or post.author.is_superuser %}
+                        <span class="verified-badge" title="Cuenta verificada"><span class="mi material-symbols-rounded" aria-hidden="true">verified</span></span>
+                      {% endif %}
+                    </div>
+                    <div class="post__time">{{ post.created_at }}</div>
+                    {% if post.location %}
+                      <div class="post__location"><span class="mi material-symbols-rounded" aria-hidden="true">location_on</span> {{ post.location }}</div>
+                    {% endif %}
+                  </div>
+                  <form method="post" action="{% url 'admin_delete_post' post.id %}" onsubmit="return confirm('¿Eliminar esta publicación? Esta acción no se puede deshacer.')">
+                    {% csrf_token %}
+                    <button class="btn btn--danger btn--sm" type="submit" title="Eliminar publicación">
+                      <span class="mi material-symbols-rounded" aria-hidden="true">delete</span>
+                    </button>
+                  </form>
+                </header>
+                {% if post.text %}
+                  <div class="post__text">{{ post.text }}</div>
+                {% endif %}
+                {% if post.images.all %}
+                  <div class="post__media">
+                    {% for img in post.images.all %}
+                      <img class="post__img" src="{{ img.url }}" alt="Foto del post" loading="lazy" />
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="muted">No hay publicaciones.</div>
+        {% endif %}
       </div>
 
       <!-- Modal de confirmación -->

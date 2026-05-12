@@ -474,6 +474,83 @@ class PostCreateForm(forms.Form):
         return post
 
 
+class PostEditForm(forms.Form):
+    text = forms.CharField(
+        required=False,
+        label="",
+        widget=forms.Textarea(attrs={"rows": 3, "placeholder": "Editar descripción..."}),
+    )
+    location = forms.CharField(
+        required=False,
+        label="",
+        max_length=255,
+        widget=forms.TextInput(attrs={"placeholder": "Editar ubicación..."}),
+    )
+    image_file = forms.FileField(
+        required=False,
+        label="",
+        widget=forms.FileInput(attrs={"accept": "image/*"}),
+    )
+
+    def __init__(self, *args, user: User, request, post: Post, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.request = request
+        self.post = post
+
+        if not self.is_bound:
+            self.initial = {
+                "text": post.text or "",
+                "location": post.location or "",
+            }
+
+    def clean(self):
+        cleaned = super().clean()
+        text = (cleaned.get("text") or "").strip()
+        image_file = cleaned.get("image_file")
+        has_existing_image = bool(self.post.images.exists())
+        if not text and not image_file and not has_existing_image:
+            raise forms.ValidationError("Escribe algo o sube una foto.")
+        return cleaned
+
+    def save(self) -> Post:
+        if self.post.author_id != self.user.id:
+            raise forms.ValidationError("No autorizado.")
+
+        text = (self.cleaned_data.get("text") or "").strip()
+        location = (self.cleaned_data.get("location") or "").strip()
+        image_file = self.cleaned_data.get("image_file")
+
+        image_url = ""
+        if image_file:
+            if getattr(settings, "USE_LOCAL_MEDIA", False):
+                original_name = getattr(image_file, "name", "") or "image"
+                safe_name = "".join(c if c.isalnum() or c in {".", "_", "-"} else "_" for c in original_name)
+                ext = ""
+                if "." in safe_name:
+                    ext = "." + safe_name.rsplit(".", 1)[-1].lower()
+                if ext not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
+                    ext = ".jpg"
+                saved_name = default_storage.save(f"posts/{uuid.uuid4().hex}{ext}", image_file)
+                image_url = self.request.build_absolute_uri(settings.MEDIA_URL + saved_name)
+            else:
+                image_url = ProfileEditForm._upload_to_supabase_storage(image_file, kind="posts")
+
+        with transaction.atomic():
+            self.post.text = text
+            self.post.location = location
+            self.post.save(update_fields=["text", "location"])
+            if image_url:
+                first = self.post.images.order_by("id").first()
+                if first:
+                    first.url = image_url
+                    first.save(update_fields=["url"])
+                else:
+                    PostImage.objects.create(post=self.post, url=image_url)
+
+        return self.post
+
+
 class PostCommentForm(forms.Form):
     text = forms.CharField(
         required=True,
