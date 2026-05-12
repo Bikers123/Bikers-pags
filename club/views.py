@@ -30,7 +30,7 @@ def info_view(request: HttpRequest):
         .distinct()[:5]
     )
     return render(request, "club/info.html", {
-        "club_name": "Tesalia Motoclub",
+        "club_name": "Rocky Point Riders - Motoclub",
         "club_tagline": "Pasión sobre dos ruedas",
         "carousel_posts": carousel_posts,
     })
@@ -266,7 +266,7 @@ def feed(request: HttpRequest):
     if not posts:
         fallback_posts = [
             {
-                "author_name": "Tesalia Motoclub",
+                "author_name": "Rocky Point Riders - Motoclub",
                 "author_photo": "https://images.unsplash.com/photo-1558981403-c5ak3d0f2394?auto=format&fit=crop&w=160&h=160&q=80",
                 "created_at": date.today(),
                 "text": "Bienvenido/a. Aquí puedes encontrar riders, agregar amigos y ver viajes del club.",

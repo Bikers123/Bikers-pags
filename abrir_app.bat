@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-title Tesalia Motoclub - App
+title Rocky Point Riders - Motoclub - App
 
 cd /d "%~dp0"
 

@@ -1,7 +1,7 @@
 {% extends 'club/base.html' %}
 {% load static %}
 {% block body_class %}page page--info{% endblock %}
-{% block title %}Tesalia Motoclub{% endblock %}
+{% block title %}Rocky Point Riders - Motoclub{% endblock %}
 
 {% block content %}
 <section class="infopage">
@@ -15,7 +15,7 @@
         <div class="infopage__overlay"></div>
         <div class="infopage__content">
           <div class="infopage__logo">
-            <img src="{% static 'club/logo/logo32.png' %}" alt="Tesalia Motoclub Logo" />
+            <img src="{% static 'club/logo/logo32.png' %}" alt="Rocky Point Riders - Motoclub Logo" />
           </div>
           <div class="brand">
             <div class="brand__text">
@@ -23,7 +23,7 @@
               <p class="brand__tagline">{{ club_tagline }}</p>
             </div>
           </div>
-          <h3 class="infopage__heading">Bienvenido al Tesalia Motoclub</h3>
+          <h3 class="infopage__heading">Bienvenido a Rocky Point Riders - Motoclub</h3>
           <p class="infopage__text">Una comunidad apasionada por las dos ruedas, los viajes y la camaradería sobre la carretera.</p>
           <div class="infopage__actions">
             <a class="btn btn--primary" href="{% url 'login' %}">Iniciar sesión</a>
